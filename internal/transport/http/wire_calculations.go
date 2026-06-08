@@ -1,0 +1,43 @@
+package http
+
+import (
+	"test-system/internal/app/command"
+	"test-system/internal/app/query"
+	"test-system/internal/domain/calculation"
+	"test-system/internal/domain/labtest"
+	"test-system/internal/domain/report"
+)
+
+type CalculationDeps struct {
+	CalcRepo   calculation.Repository
+	TestRepo   labtest.Repository
+	ReportRepo report.Repository
+}
+
+func WireCalculations(
+	deps CalculationDeps,
+) (*CalculationCommandHttpHandler, *CalculationQueryHttpHandler) {
+	// app parts
+
+	// commands
+	updateHandler := command.NewUpdateCalculationHandler(
+		deps.CalcRepo,
+		deps.TestRepo,
+		deps.ReportRepo,
+	)
+
+	// queries
+	listHandler := query.NewListCalculationsHandler(
+		deps.CalcRepo,
+	)
+
+	// transport parts
+	cmdHttp := NewCalculationCommandHttpHandler(
+		updateHandler,
+	)
+	queryHttp := NewCalculationQueryHttpHandler(
+		listHandler,
+	)
+
+	return cmdHttp, queryHttp
+}

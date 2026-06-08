@@ -1,0 +1,4 @@
+- add surrealdb or similar database store
+- create a concrete type that implements the repository for the domain type it is concerned with
+- di will create the appropriate store and use it
+- check if top level store with Repos() {all repo interfaces} is necessary
