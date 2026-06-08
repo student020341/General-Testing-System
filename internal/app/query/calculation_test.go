@@ -1,0 +1,42 @@
+package query
+
+import (
+	"context"
+	"test-system/internal/domain/calculation"
+	"testing"
+
+	"go.uber.org/mock/gomock"
+)
+
+func TestSomething(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockCalcRepo := NewMockCalculationRepository(ctrl)
+
+	ctx := context.Background()
+	expectedSearch := calculation.Search{Name: "test-test", Page: 1, PageSize: 25}
+	expectedResult := []calculation.Calculation{
+		{
+			ID:     "foo",
+			TestID: "bar",
+			Name:   "test-test",
+		},
+	}
+
+	mockCalcRepo.EXPECT().
+		Search(ctx, expectedSearch).
+		Return(expectedResult, nil)
+
+	handler := NewListCalculationsHandler(mockCalcRepo)
+	list, err := handler.Handle(ctx, ListCalculationsInput{Name: "test-test"})
+	if err != nil {
+		t.Fatalf("list handler: %v", err)
+	}
+
+	if len(list) != 1 {
+		t.Fatalf("unexpected list length: %d", len(list))
+	}
+
+	if list[0].ID != "foo" {
+		t.Fatalf("unexpected calculation id: %s", list[0].ID)
+	}
+}
