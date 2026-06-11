@@ -8,12 +8,12 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func TestSomething(t *testing.T) {
+func TestCalculationsQuery(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockCalcRepo := NewMockCalculationRepository(ctrl)
 
 	ctx := context.Background()
-	expectedSearch := calculation.Search{Name: "test-test", Page: 1, PageSize: 25}
+	expectedSearch := calculation.Search{Name: "test-test", Page: 1, PageSize: 10}
 	expectedResult := []calculation.Calculation{
 		{
 			ID:     "foo",
@@ -27,7 +27,7 @@ func TestSomething(t *testing.T) {
 		Return(expectedResult, nil)
 
 	handler := NewListCalculationsHandler(mockCalcRepo)
-	list, err := handler.Handle(ctx, ListCalculationsInput{Name: "test-test"})
+	list, err := handler.Handle(ctx, calculation.Search{Name: "test-test"}.WithBounds())
 	if err != nil {
 		t.Fatalf("list handler: %v", err)
 	}

@@ -3,17 +3,15 @@ package app
 import (
 	"log"
 	"net/http"
-	"test-system/internal/domain/calculation"
-	"test-system/internal/domain/labtest"
 	"test-system/internal/domain/report"
+	memorymap "test-system/internal/infra/store/memory_map"
 	transport "test-system/internal/transport/http"
 )
 
 func main() {
 
-	// TODO
-	var calcRepo calculation.Repository
-	var testRepo labtest.Repository
+	calcRepo := memorymap.NewCalculationRepository()
+	testRepo := memorymap.NewTestRepository()
 	var reportRepo report.Repository
 
 	// transport wiring
@@ -22,9 +20,6 @@ func main() {
 		TestRepo:   testRepo,
 		ReportRepo: reportRepo,
 	})
-
-	// TODO
-	log.Fatalf("unimplemented")
 
 	router := transport.NewRouter(transport.HttpHandlers{
 		CalculationCommands: calcCmd,

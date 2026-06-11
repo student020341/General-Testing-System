@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"test-system/internal/app/query"
+	"test-system/internal/domain/calculation"
 )
 
 type CalculationQueryHttpHandler struct {
@@ -24,11 +25,13 @@ func (h CalculationQueryHttpHandler) List(
 	r *http.Request,
 ) {
 	testFilter := r.URL.Query().Get("test_id")
+	nameFilter := r.URL.Query().Get("name")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
 
-	input := query.ListCalculationsInput{
+	input := calculation.Search{
 		TestID:   testFilter,
+		Name:     nameFilter,
 		Page:     page,
 		PageSize: pageSize,
 	}

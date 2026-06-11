@@ -5,14 +5,6 @@ import (
 	"test-system/internal/domain/calculation"
 )
 
-// ListCalculationsInput copies the domain.Search in case they diverge over time
-type ListCalculationsInput struct {
-	TestID   string
-	Name     string
-	Page     int
-	PageSize int
-}
-
 type ListCalculationsHandler struct {
 	calcRepo calculation.Repository
 }
@@ -27,23 +19,12 @@ func NewListCalculationsHandler(
 
 func (h ListCalculationsHandler) Handle(
 	ctx context.Context,
-	input ListCalculationsInput,
+	input calculation.Search,
 ) ([]calculation.Calculation, error) {
-	// TODO validate inputs per layer
-	if input.Page < 1 {
-		input.Page = 1
-	}
-	if input.PageSize < 1 || input.PageSize > 50 {
-		input.PageSize = 25
-	}
+	// not desired at this point to error over letting infra enforce defaults over bad input
+	// if err := search.Validate(); err != nil {
+	// 	return nil, err
+	// }
 
-	// map to domain search
-	search := calculation.Search{
-		TestID:   input.TestID,
-		Name:     input.Name,
-		Page:     input.Page,
-		PageSize: input.PageSize,
-	}
-
-	return h.calcRepo.Search(ctx, search)
+	return h.calcRepo.Search(ctx, input)
 }
