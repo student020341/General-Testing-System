@@ -10,6 +10,8 @@ var (
 	ErrInvalidSearchPageSize = errors.New("search page size must be between 1 and 100")
 )
 
+// TODO consider strategies to reduce duplication of paging vars
+
 type Search struct {
 	TestID   string
 	Name     string

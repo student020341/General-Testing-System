@@ -41,6 +41,35 @@ func (r TestRepository) GetByID(
 	return testToDomain(test), err
 }
 
+func (r TestRepository) Search(
+	ctx context.Context,
+	search labtest.Search,
+) ([]labtest.Test, error) {
+	res, err := r.BaseRepository.Search(
+		search.Page,
+		search.PageSize,
+		func(dt dbTest) bool {
+			nameMatch := search.Name == "" || dt.Name == search.Name
+			reportMatch := search.ReportID == "" || dt.ReportID == search.ReportID
+			return nameMatch && reportMatch
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	list := make([]labtest.Test, len(res))
+	for i, v := range res {
+		d := testToDomain(v)
+		if d == nil {
+			d = &labtest.Test{}
+		}
+		list[i] = *d
+	}
+
+	return list, nil
+}
+
 func (r TestRepository) Save(
 	ctx context.Context,
 	test *labtest.Test,

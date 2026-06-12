@@ -49,8 +49,8 @@ func (r CalculationRepository) Search(
 		search.Page,
 		search.PageSize,
 		func(dc dbCalc) bool {
-			nameMatch := dc.Calculation.Name == search.Name
-			testMatch := dc.Calculation.TestID == search.TestID
+			nameMatch := search.Name == "" || dc.Name == search.Name
+			testMatch := search.TestID == "" || dc.TestID == search.TestID
 			return nameMatch && testMatch
 		},
 	)
