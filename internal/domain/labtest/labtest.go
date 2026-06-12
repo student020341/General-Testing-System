@@ -20,3 +20,15 @@ func (t Test) EnsureCanModify() error {
 	}
 	return nil
 }
+
+func (t *Test) AssignToReport(reportID string) {
+	t.ReportID = reportID
+}
+
+func (t *Test) EnsureValid() error {
+	if t.Name == "" {
+		return ErrNameInvalid
+	}
+
+	return nil
+}

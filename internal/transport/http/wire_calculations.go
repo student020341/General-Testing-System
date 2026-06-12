@@ -4,6 +4,7 @@ import (
 	"test-system/internal/app/command"
 	"test-system/internal/app/query"
 	"test-system/internal/domain/calculation"
+	"test-system/internal/domain/ds"
 	"test-system/internal/domain/labtest"
 	"test-system/internal/domain/report"
 )
@@ -22,8 +23,10 @@ func WireCalculations(
 	// commands
 	updateHandler := command.NewUpdateCalculationHandler(
 		deps.CalcRepo,
-		deps.TestRepo,
-		deps.ReportRepo,
+		*ds.NewCalculationUpdateValidator(
+			deps.TestRepo,
+			deps.ReportRepo,
+		),
 	)
 
 	// queries
