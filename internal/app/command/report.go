@@ -42,7 +42,7 @@ func (h AddTestToReportHandler) Handle(
 	}
 
 	// validate
-	if err := h.reportServ.Validate(*r, *t); err != nil {
+	if err := h.reportServ.Validate(ctx, *r, *t); err != nil {
 		return err
 	}
 

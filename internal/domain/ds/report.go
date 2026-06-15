@@ -1,17 +1,26 @@
 package ds
 
 import (
+	"context"
+	"fmt"
 	"test-system/internal/domain/labtest"
 	"test-system/internal/domain/report"
 )
 
-type ReportAddTestValidation struct{}
+type ReportAddTestValidation struct {
+	testRepo labtest.Repository
+}
 
-func NewReportAddTestValidation() ReportAddTestValidation {
-	return ReportAddTestValidation{}
+func NewReportAddTestValidation(
+	tr labtest.Repository,
+) ReportAddTestValidation {
+	return ReportAddTestValidation{
+		testRepo: tr,
+	}
 }
 
 func (v ReportAddTestValidation) Validate(
+	ctx context.Context,
 	r report.Report,
 	t labtest.Test,
 ) error {
@@ -25,7 +34,14 @@ func (v ReportAddTestValidation) Validate(
 		return err
 	}
 
-	// TODO don't assign if name conflicts
+	// don't assign if name conflicts
+	search := labtest.Search{
+		Name:     t.Name,
+		PageSize: 1,
+	}
+	if list, err := v.testRepo.Search(ctx, search); err != nil && len(list) > 0 {
+		return fmt.Errorf("a test named %q is already assigned to report %s", t.Name, r.ID)
+	}
 
 	return nil
 }
