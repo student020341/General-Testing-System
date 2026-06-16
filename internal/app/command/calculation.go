@@ -6,25 +6,61 @@ import (
 	"test-system/internal/domain/ds"
 )
 
+// calculation crud
+//
+//
+
+// create
+
+type CreateCalculationHandler struct {
+	calcRepo calculation.Repository
+}
+
+func NewCreateCalculationHandler(
+	cr calculation.Repository,
+) CreateCalculationHandler {
+	return CreateCalculationHandler{
+		calcRepo: cr,
+	}
+}
+
+// read
+
+// update
+
 type UpdateCalculationHandler struct {
-	calcRepo    calculation.Repository
-	cuValidator ds.CalculationUpdateValidator // TODO name these better
+	calcRepo calculation.Repository
+	calcServ ds.CalculationModifiableGuard // TODO name these better
 }
 
 func NewUpdateCalculationHandler(
 	cr calculation.Repository,
-	cuv ds.CalculationUpdateValidator,
+	cuv ds.CalculationModifiableGuard,
 ) UpdateCalculationHandler {
 	return UpdateCalculationHandler{
-		calcRepo:    cr,
-		cuValidator: cuv,
+		calcRepo: cr,
+		calcServ: cuv,
 	}
 }
 
-func (h UpdateCalculationHandler) Handle(ctx context.Context, calc calculation.Calculation) error {
-	if err := h.cuValidator.ValidateUpdate(ctx, calc); err != nil {
+func (h UpdateCalculationHandler) Handle(ctx context.Context, newCalc calculation.Calculation) error {
+	entity, err := h.calcRepo.GetByID(ctx, newCalc.ID)
+	if err != nil {
 		return err
 	}
 
-	return h.calcRepo.Save(ctx, &calc)
+	if err := h.calcServ.EnsureCanModify(ctx, *entity); err != nil {
+		return err
+	}
+
+	if err := entity.Update(calculation.UpdateCalculationFields{
+		Name:    newCalc.Name,
+		Closure: newCalc.Closure,
+	}); err != nil {
+		return err
+	}
+
+	return h.calcRepo.Save(ctx, entity)
 }
+
+// delete

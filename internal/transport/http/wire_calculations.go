@@ -23,7 +23,7 @@ func WireCalculations(
 	// commands
 	updateHandler := command.NewUpdateCalculationHandler(
 		deps.CalcRepo,
-		*ds.NewCalculationUpdateValidator(
+		*ds.NewCalculationModifiableGuard(
 			deps.TestRepo,
 			deps.ReportRepo,
 		),

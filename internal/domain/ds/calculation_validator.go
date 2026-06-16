@@ -7,22 +7,22 @@ import (
 	"test-system/internal/domain/report"
 )
 
-type CalculationUpdateValidator struct {
+type CalculationModifiableGuard struct {
 	testRepo   labtest.Repository
 	reportRepo report.Repository
 }
 
-func NewCalculationUpdateValidator(
+func NewCalculationModifiableGuard(
 	tr labtest.Repository,
 	rr report.Repository,
-) *CalculationUpdateValidator {
-	return &CalculationUpdateValidator{
+) *CalculationModifiableGuard {
+	return &CalculationModifiableGuard{
 		testRepo:   tr,
 		reportRepo: rr,
 	}
 }
 
-func (v CalculationUpdateValidator) ValidateUpdate(
+func (v CalculationModifiableGuard) EnsureCanModify(
 	ctx context.Context,
 	calc calculation.Calculation,
 ) error {
