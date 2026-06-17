@@ -4,6 +4,8 @@ import (
 	"context"
 	"test-system/internal/domain/calculation"
 	"test-system/internal/domain/ds"
+
+	"github.com/google/uuid"
 )
 
 // calculation crud
@@ -22,6 +24,16 @@ func NewCreateCalculationHandler(
 	return CreateCalculationHandler{
 		calcRepo: cr,
 	}
+}
+
+func (h CreateCalculationHandler) Handle(ctx context.Context, input calculation.CreateCalculationInput) error {
+	input.ID = uuid.NewString()
+	entity, err := calculation.New(input)
+	if err != nil {
+		return err
+	}
+
+	return h.calcRepo.Save(ctx, entity)
 }
 
 // read
@@ -53,7 +65,7 @@ func (h UpdateCalculationHandler) Handle(ctx context.Context, newCalc calculatio
 		return err
 	}
 
-	if err := entity.Update(calculation.UpdateCalculationFields{
+	if err := entity.Update(calculation.CalculationFields{
 		Name:    newCalc.Name,
 		Closure: newCalc.Closure,
 	}); err != nil {

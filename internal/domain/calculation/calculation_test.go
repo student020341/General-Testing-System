@@ -84,7 +84,6 @@ func TestCalculationClosureParsing(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func compareDetails(a, b closureDetails) error {

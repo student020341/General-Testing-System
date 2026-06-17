@@ -1,0 +1,5 @@
+structure idea
+    flat isn't going to scale very far, so restructure as internal/layer/entity/feature
+    similar to internal/domain/calculations/stuff, create internal/app/calculation/cmd_action or internal/app/calculation/query_action
+    transport example: internal/transport/http/calculation/cmd_create or internal/transport/http/calculation/query_list
+    and note this is a little flexible around things like internal/infra/store/xyz or internal/app/something for actions that don't belong to an entity

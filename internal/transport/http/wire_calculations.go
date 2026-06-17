@@ -29,6 +29,10 @@ func WireCalculations(
 		),
 	)
 
+	createHandler := command.NewCreateCalculationHandler(
+		deps.CalcRepo,
+	)
+
 	// queries
 	listHandler := query.NewListCalculationsHandler(
 		deps.CalcRepo,
@@ -36,6 +40,7 @@ func WireCalculations(
 
 	// transport parts
 	cmdHttp := NewCalculationCommandHttpHandler(
+		createHandler,
 		updateHandler,
 	)
 	queryHttp := NewCalculationQueryHttpHandler(

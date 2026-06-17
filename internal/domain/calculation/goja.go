@@ -17,6 +17,10 @@ type closureDetails struct {
 
 // parseAndWalk examines a javascript arrow function to extract its parameters and possible returns.
 func parseAndWalk(src string) (*closureDetails, error) {
+	if src == "" {
+		return &closureDetails{}, nil
+	}
+
 	p, err := parser.ParseFile(nil, "", src, 0)
 	if err != nil {
 		return nil, fmt.Errorf("parsing source: %w", err)
