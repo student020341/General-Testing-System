@@ -1,5 +1,18 @@
-structure idea
-    flat isn't going to scale very far, so restructure as internal/layer/entity/feature
-    similar to internal/domain/calculations/stuff, create internal/app/calculation/cmd_action or internal/app/calculation/query_action
-    transport example: internal/transport/http/calculation/cmd_create or internal/transport/http/calculation/query_list
-    and note this is a little flexible around things like internal/infra/store/xyz or internal/app/something for actions that don't belong to an entity
+structure idea 2
+    transport refactor success
+    follow up with restructure of app
+        now: app/command/calculations.go (contains crud)
+        next: app/calculation/create.go, app/calculation/list.go, etc.
+
+report and list crud
+    a calculation should not exist outside of a test, a test should not exist outside of a report, so fill out basic crud for test and reports and then update the e2e test
+    valid parent entity constraint - create a domain service interface in child domain to ensure parent entity is valid, concrete interface in domain service dir
+    create test helpers to help seed data, maybe through the test server for proper e2e, maybe direct in the repositories, maybe both
+
+calculation linking
+    figure out ability to have test calculation B reference an output of test calculation A as an input
+    determine if the calculation owns this or the test does
+
+lab test run
+    lab report needs ability to have global inputs that can be consumed by calculations
+    ability to build dependency graphs between calculations, verify if all tests can be run, and then execute them all
