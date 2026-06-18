@@ -14,7 +14,12 @@ import (
 	"test-system/internal/domain/report"
 	memorymap "test-system/internal/infra/store/memory_map"
 	calculationTransport "test-system/internal/transport/http/calculation"
+	"testing"
 )
+
+// test server
+//
+//
 
 type TestServer struct {
 	calcRepo   calculation.Repository
@@ -137,4 +142,34 @@ func doRequest[T any](
 		Body:   body,
 		Data:   data,
 	}, nil
+}
+
+// test assert
+//
+//
+
+// TF is TestFun
+type TF struct {
+	testing.TB
+}
+
+func (tf TF) Ok(err error, msg string) {
+	tf.Helper()
+	if err != nil {
+		tf.Fatalf("%s: %v", msg, err)
+	}
+}
+
+func (tf TF) Equal(expected, actual any, msg string) {
+	tf.Helper()
+	if expected != actual {
+		tf.Fatalf("%s: expected %v, got %v", msg, expected, actual)
+	}
+}
+
+func (tf TF) NotNil(actual any, msg string) {
+	tf.Helper()
+	if actual == nil {
+		tf.Fatalf("%s: value is nil", msg)
+	}
 }
