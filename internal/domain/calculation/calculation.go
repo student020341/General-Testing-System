@@ -39,11 +39,17 @@ func New(input CreateCalculationInput) (*Calculation, error) {
 		return nil, ErrNameBlank
 	}
 
+	cd, err := parseAndWalk(input.Closure)
+	if err != nil {
+		return nil, fmt.Errorf("parsing closure: %w", err)
+	}
+
 	return &Calculation{
-		ID:      input.ID,
-		TestID:  input.TestID,
-		Name:    input.Name,
-		Closure: input.Closure,
+		ID:             input.ID,
+		TestID:         input.TestID,
+		Name:           input.Name,
+		Closure:        input.Closure,
+		ClosureDetails: cd,
 	}, nil
 }
 

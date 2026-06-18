@@ -5,6 +5,26 @@ import (
 	"test-system/internal/domain/calculation"
 )
 
+// read
+
+type GetCalculationByIDHandler struct {
+	calcRepo calculation.Repository
+}
+
+func NewGetCalculationByIDHandler(
+	cr calculation.Repository,
+) GetCalculationByIDHandler {
+	return GetCalculationByIDHandler{
+		calcRepo: cr,
+	}
+}
+
+func (h GetCalculationByIDHandler) Handle(ctx context.Context, id string) (*calculation.Calculation, error) {
+	return h.calcRepo.GetByID(ctx, id)
+}
+
+// list
+
 type ListCalculationsHandler struct {
 	calcRepo calculation.Repository
 }

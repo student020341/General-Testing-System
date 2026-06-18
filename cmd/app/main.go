@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"test-system/internal/app/command"
+	"test-system/internal/app/query"
+	"test-system/internal/domain/ds"
 	memorymap "test-system/internal/infra/store/memory_map"
-	transport "test-system/internal/transport/http"
+	"test-system/internal/transport/http/calculation"
 )
 
 func main() {
@@ -15,19 +18,28 @@ func main() {
 	reportRepo := memorymap.NewReportRepository()
 
 	// transport wiring
-	calcCmd, calcQuery := transport.WireCalculations(transport.CalculationDeps{
-		CalcRepo:   calcRepo,
-		TestRepo:   testRepo,
-		ReportRepo: reportRepo,
-	})
+	mux := http.NewServeMux()
 
-	router := transport.NewRouter(transport.HttpHandlers{
-		CalculationCommands: calcCmd,
-		CalculationQueries:  calcQuery,
-	})
+	calculation.RegisterRoutes(
+		mux,
+		calculation.QueryHandlers{
+			Read: query.NewGetCalculationByIDHandler(calcRepo),
+			List: query.NewListCalculationsHandler(calcRepo),
+		},
+		calculation.CommandHandlers{
+			Create: command.NewCreateCalculationHandler(calcRepo),
+			Update: command.NewUpdateCalculationHandler(
+				calcRepo,
+				ds.NewCalculationModifiableGuard(
+					testRepo,
+					reportRepo,
+				),
+			),
+		},
+	)
 
 	fmt.Println("starting server on port 2000")
-	if err := http.ListenAndServe(":2000", router); err != nil {
+	if err := http.ListenAndServe(":2000", mux); err != nil {
 		log.Fatalf("starting server: %v", err)
 	}
 }

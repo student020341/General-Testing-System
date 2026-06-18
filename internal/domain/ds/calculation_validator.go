@@ -15,8 +15,8 @@ type CalculationModifiableGuard struct {
 func NewCalculationModifiableGuard(
 	tr labtest.Repository,
 	rr report.Repository,
-) *CalculationModifiableGuard {
-	return &CalculationModifiableGuard{
+) CalculationModifiableGuard {
+	return CalculationModifiableGuard{
 		testRepo:   tr,
 		reportRepo: rr,
 	}

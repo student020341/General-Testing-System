@@ -26,17 +26,22 @@ func NewCreateCalculationHandler(
 	}
 }
 
-func (h CreateCalculationHandler) Handle(ctx context.Context, input calculation.CreateCalculationInput) error {
+func (h CreateCalculationHandler) Handle(
+	ctx context.Context,
+	input calculation.CreateCalculationInput,
+) (*calculation.Calculation, error) {
 	input.ID = uuid.NewString()
 	entity, err := calculation.New(input)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return h.calcRepo.Save(ctx, entity)
-}
+	if err := h.calcRepo.Save(ctx, entity); err != nil {
+		return nil, err
+	}
 
-// read
+	return entity, nil
+}
 
 // update
 
@@ -55,24 +60,31 @@ func NewUpdateCalculationHandler(
 	}
 }
 
-func (h UpdateCalculationHandler) Handle(ctx context.Context, newCalc calculation.Calculation) error {
+func (h UpdateCalculationHandler) Handle(
+	ctx context.Context,
+	newCalc calculation.Calculation,
+) (*calculation.Calculation, error) {
 	entity, err := h.calcRepo.GetByID(ctx, newCalc.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := h.calcServ.EnsureCanModify(ctx, *entity); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := entity.Update(calculation.CalculationFields{
 		Name:    newCalc.Name,
 		Closure: newCalc.Closure,
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
-	return h.calcRepo.Save(ctx, entity)
+	if err := h.calcRepo.Save(ctx, entity); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
 }
 
 // delete
