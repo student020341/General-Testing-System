@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"test-system/internal/app/command"
+	appCalc "test-system/internal/app/calculation"
 	"test-system/internal/domain/calculation"
 )
 
 type CreateHandler struct {
-	create command.CreateCalculationHandler
+	create appCalc.CreateHandler
 }
 
-func NewCreateHandler(create command.CreateCalculationHandler) *CreateHandler {
+func NewCreateHandler(create appCalc.CreateHandler) *CreateHandler {
 	return &CreateHandler{
 		create: create,
 	}

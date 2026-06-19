@@ -1,9 +1,3 @@
-structure idea 2
-    transport refactor success
-    follow up with restructure of app
-        now: app/command/calculations.go (contains crud)
-        next: app/calculation/create.go, app/calculation/list.go, etc.
-
 report and list crud
     a calculation should not exist outside of a test, a test should not exist outside of a report, so fill out basic crud for test and reports and then update the e2e test
     valid parent entity constraint - create a domain service interface in child domain to ensure parent entity is valid, concrete interface in domain service dir
@@ -15,4 +9,6 @@ calculation linking
 
 lab test run
     lab report needs ability to have global inputs that can be consumed by calculations
+        idea: labtestinput domain that has its own repository and parent test id similar to calculation
+        ^handle any additional needs via domain service, similar to calculation->test actions
     ability to build dependency graphs between calculations, verify if all tests can be run, and then execute them all

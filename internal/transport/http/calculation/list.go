@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"test-system/internal/app/query"
+	appCalc "test-system/internal/app/calculation"
 	"test-system/internal/domain/calculation"
 )
 
 type ListHandler struct {
-	list query.ListCalculationsHandler
+	list appCalc.ListHandler
 }
 
-func NewListHandler(appQuery query.ListCalculationsHandler) *ListHandler {
+func NewListHandler(appQuery appCalc.ListHandler) *ListHandler {
 	return &ListHandler{
 		list: appQuery,
 	}

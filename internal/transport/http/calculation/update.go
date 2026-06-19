@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"test-system/internal/app/command"
+	appCalc "test-system/internal/app/calculation"
 	"test-system/internal/domain/calculation"
 )
 
 type UpdateHandler struct {
-	update command.UpdateCalculationHandler
+	update appCalc.UpdateHandler
 }
 
-func NewUpdateHandler(update command.UpdateCalculationHandler) *UpdateHandler {
+func NewUpdateHandler(update appCalc.UpdateHandler) *UpdateHandler {
 	return &UpdateHandler{
 		update: update,
 	}

@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"test-system/internal/app/command"
-	"test-system/internal/app/query"
+	appCalc "test-system/internal/app/calculation"
 	"test-system/internal/domain/ds"
 	memorymap "test-system/internal/infra/store/memory_map"
 	"test-system/internal/transport/http/calculation"
@@ -23,12 +22,12 @@ func main() {
 	calculation.RegisterRoutes(
 		mux,
 		calculation.QueryHandlers{
-			Read: query.NewGetCalculationByIDHandler(calcRepo),
-			List: query.NewListCalculationsHandler(calcRepo),
+			Read: appCalc.NewGetByIDHandler(calcRepo),
+			List: appCalc.NewListHandler(calcRepo),
 		},
 		calculation.CommandHandlers{
-			Create: command.NewCreateCalculationHandler(calcRepo),
-			Update: command.NewUpdateCalculationHandler(
+			Create: appCalc.NewCreateHandler(calcRepo),
+			Update: appCalc.NewUpdateHandler(
 				calcRepo,
 				ds.NewCalculationModifiableGuard(
 					testRepo,

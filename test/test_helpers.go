@@ -6,8 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"test-system/internal/app/command"
-	"test-system/internal/app/query"
+	appCalc "test-system/internal/app/calculation"
 	"test-system/internal/domain/calculation"
 	"test-system/internal/domain/ds"
 	"test-system/internal/domain/labtest"
@@ -38,12 +37,12 @@ func setupTestServer() TestServer {
 	calculationTransport.RegisterRoutes(
 		mux,
 		calculationTransport.QueryHandlers{
-			Read: query.NewGetCalculationByIDHandler(calcRepo),
-			List: query.NewListCalculationsHandler(calcRepo),
+			Read: appCalc.NewGetByIDHandler(calcRepo),
+			List: appCalc.NewListHandler(calcRepo),
 		},
 		calculationTransport.CommandHandlers{
-			Create: command.NewCreateCalculationHandler(calcRepo),
-			Update: command.NewUpdateCalculationHandler(
+			Create: appCalc.NewCreateHandler(calcRepo),
+			Update: appCalc.NewUpdateHandler(
 				calcRepo,
 				ds.NewCalculationModifiableGuard(
 					testRepo,

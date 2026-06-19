@@ -1,4 +1,4 @@
-package query
+package calculation
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func TestCalculationsQuery(t *testing.T) {
 		Search(ctx, expectedSearch).
 		Return(expectedResult, nil)
 
-	handler := NewListCalculationsHandler(mockCalcRepo)
+	handler := NewListHandler(mockCalcRepo)
 	list, err := handler.Handle(ctx, calculation.Search{Name: "test-test"}.WithBounds())
 	if err != nil {
 		t.Fatalf("list handler: %v", err)

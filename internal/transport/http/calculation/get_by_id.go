@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"test-system/internal/app/query"
+	"test-system/internal/app/calculation"
 )
 
 type GetByIDHandler struct {
-	getByID query.GetCalculationByIDHandler
+	getByID calculation.GetByIDHandler
 }
 
-func NewGetByIDHandler(getByID query.GetCalculationByIDHandler) *GetByIDHandler {
+func NewGetByIDHandler(getByID calculation.GetByIDHandler) *GetByIDHandler {
 	return &GetByIDHandler{
 		getByID: getByID,
 	}

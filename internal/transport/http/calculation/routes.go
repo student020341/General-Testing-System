@@ -2,18 +2,17 @@ package calculation
 
 import (
 	"net/http"
-	"test-system/internal/app/command"
-	"test-system/internal/app/query"
+	"test-system/internal/app/calculation"
 )
 
 type QueryHandlers struct {
-	Read query.GetCalculationByIDHandler
-	List query.ListCalculationsHandler
+	Read calculation.GetByIDHandler
+	List calculation.ListHandler
 }
 
 type CommandHandlers struct {
-	Create command.CreateCalculationHandler
-	Update command.UpdateCalculationHandler
+	Create calculation.CreateHandler
+	Update calculation.UpdateHandler
 }
 
 func RegisterRoutes(
