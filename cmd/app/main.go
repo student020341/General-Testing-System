@@ -5,9 +5,11 @@ import (
 	"log"
 	"net/http"
 	appCalc "test-system/internal/app/calculation"
+	appTest "test-system/internal/app/labtest"
 	"test-system/internal/domain/ds"
 	memorymap "test-system/internal/infra/store/memory_map"
 	"test-system/internal/transport/http/calculation"
+	"test-system/internal/transport/http/labtest"
 )
 
 func main() {
@@ -18,6 +20,13 @@ func main() {
 
 	// transport wiring
 	mux := http.NewServeMux()
+
+	labtest.RegisterRoutes(
+		mux,
+		labtest.CommandHandlers{
+			Create: appTest.NewCreateHandler(testRepo),
+		},
+	)
 
 	calculation.RegisterRoutes(
 		mux,

@@ -1,5 +1,7 @@
 package labtest
 
+import "github.com/google/uuid"
+
 type Status string
 
 const (
@@ -34,10 +36,6 @@ type CreateTestInput struct {
 
 // New creates a new lab test
 func New(input CreateTestInput) (*Test, error) {
-	if input.ID == "" {
-		return nil, ErrIDBlank
-	}
-
 	// TODO domain service to ensure report exists
 	if input.ReportID == "" {
 		return nil, ErrReportIDBlank
@@ -48,7 +46,7 @@ func New(input CreateTestInput) (*Test, error) {
 	}
 
 	return &Test{
-		ID:       input.ID,
+		ID:       uuid.NewString(),
 		ReportID: input.ReportID,
 		Name:     input.Name,
 		Status:   input.Status,

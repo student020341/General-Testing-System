@@ -8,12 +8,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	appCalc "test-system/internal/app/calculation"
+	appTest "test-system/internal/app/labtest"
 	"test-system/internal/domain/calculation"
 	"test-system/internal/domain/ds"
 	"test-system/internal/domain/labtest"
 	"test-system/internal/domain/report"
 	memorymap "test-system/internal/infra/store/memory_map"
 	calculationTransport "test-system/internal/transport/http/calculation"
+	testTransport "test-system/internal/transport/http/labtest"
 	"testing"
 )
 
@@ -34,6 +36,13 @@ func setupTestServer() TestServer {
 	reportRepo := memorymap.NewReportRepository()
 
 	mux := http.NewServeMux()
+
+	testTransport.RegisterRoutes(
+		mux,
+		testTransport.CommandHandlers{
+			Create: appTest.NewCreateHandler(testRepo),
+		},
+	)
 
 	calculationTransport.RegisterRoutes(
 		mux,
