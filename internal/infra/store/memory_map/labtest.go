@@ -2,6 +2,7 @@ package memorymap
 
 import (
 	"context"
+	"errors"
 	"test-system/internal/domain/labtest"
 )
 
@@ -38,6 +39,9 @@ func (r TestRepository) GetByID(
 	id string,
 ) (*labtest.Test, error) {
 	test, err := r.BaseRepository.GetByID(id)
+	if errors.Is(err, ErrNotFound) {
+		return nil, labtest.ErrTestNotFound
+	}
 	return testToDomain(test), err
 }
 

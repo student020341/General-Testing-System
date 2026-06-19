@@ -21,14 +21,53 @@ func (t Test) EnsureCanModify() error {
 	return nil
 }
 
-func (t *Test) AssignToReport(reportID string) {
-	t.ReportID = reportID
+type TestFields struct {
+	Name   string
+	Status Status
 }
 
-func (t *Test) EnsureValid() error {
-	if t.Name == "" {
-		return ErrNameInvalid
+type CreateTestInput struct {
+	ID       string
+	ReportID string
+	TestFields
+}
+
+// New creates a new lab test
+func New(input CreateTestInput) (*Test, error) {
+	if input.ID == "" {
+		return nil, ErrIDBlank
 	}
+
+	// TODO domain service to ensure report exists
+	if input.ReportID == "" {
+		return nil, ErrReportIDBlank
+	}
+
+	if input.Name == "" {
+		return nil, ErrNameBlank
+	}
+
+	return &Test{
+		ID:       input.ID,
+		ReportID: input.ReportID,
+		Name:     input.Name,
+		Status:   input.Status,
+	}, nil
+}
+
+func (t *Test) Update(fields TestFields) error {
+	if t == nil {
+		return ErrNilEntity
+	}
+
+	// validate update ok
+	if fields.Name == "" {
+		return ErrNameBlank
+	}
+
+	// update
+	t.Name = fields.Name
+	t.Status = fields.Status
 
 	return nil
 }

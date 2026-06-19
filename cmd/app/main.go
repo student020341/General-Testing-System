@@ -26,7 +26,13 @@ func main() {
 			List: appCalc.NewListHandler(calcRepo),
 		},
 		calculation.CommandHandlers{
-			Create: appCalc.NewCreateHandler(calcRepo),
+			Create: appCalc.NewCreateHandler(
+				calcRepo,
+				ds.NewCalculationCreate(
+					calcRepo,
+					testRepo,
+				),
+			),
 			Update: appCalc.NewUpdateHandler(
 				calcRepo,
 				ds.NewCalculationModifiableGuard(

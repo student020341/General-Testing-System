@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -41,7 +42,13 @@ func setupTestServer() TestServer {
 			List: appCalc.NewListHandler(calcRepo),
 		},
 		calculationTransport.CommandHandlers{
-			Create: appCalc.NewCreateHandler(calcRepo),
+			Create: appCalc.NewCreateHandler(
+				calcRepo,
+				ds.NewCalculationCreate(
+					calcRepo,
+					testRepo,
+				),
+			),
 			Update: appCalc.NewUpdateHandler(
 				calcRepo,
 				ds.NewCalculationModifiableGuard(
@@ -133,7 +140,7 @@ func doRequest[T any](
 
 	var data T
 	if err := json.Unmarshal(body, &data); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing response %q: %w", string(body), err)
 	}
 
 	return &ParsedResponse[T]{

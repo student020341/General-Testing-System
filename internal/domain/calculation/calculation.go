@@ -1,6 +1,10 @@
 package calculation
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
 
 type Calculation struct {
 	ID             string
@@ -27,10 +31,6 @@ type CreateCalculationInput struct {
 // copy a calculation to another test, they need to clone the calculation from
 // the source test to the destination test.
 func New(input CreateCalculationInput) (*Calculation, error) {
-	if input.ID == "" {
-		return nil, ErrIDBlank
-	}
-
 	if input.TestID == "" {
 		return nil, ErrTestIDBlank
 	}
@@ -45,7 +45,7 @@ func New(input CreateCalculationInput) (*Calculation, error) {
 	}
 
 	return &Calculation{
-		ID:             input.ID,
+		ID:             uuid.NewString(),
 		TestID:         input.TestID,
 		Name:           input.Name,
 		Closure:        input.Closure,
