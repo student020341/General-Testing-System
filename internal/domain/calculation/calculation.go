@@ -22,7 +22,6 @@ type CalculationFields struct {
 
 // CreateCalculationInput is the required fields for creating a calculation
 type CreateCalculationInput struct {
-	ID     string
 	TestID string
 	CalculationFields
 }
