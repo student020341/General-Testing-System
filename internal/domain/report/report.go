@@ -1,5 +1,7 @@
 package report
 
+import "github.com/google/uuid"
+
 type Status string
 
 const (
@@ -13,12 +15,20 @@ type Report struct {
 	Status Status
 }
 
-func New(id string, name string) *Report {
-	return &Report{
-		ID:     id,
-		Name:   name,
-		Status: StatusOpen,
+type CreateReportInput struct {
+	Name string
+}
+
+func New(input CreateReportInput) (*Report, error) {
+	if input.Name == "" {
+		return nil, ErrNameBlank
 	}
+
+	return &Report{
+		ID:     uuid.New().String(),
+		Name:   input.Name,
+		Status: StatusOpen,
+	}, nil
 }
 
 func (r Report) EnsureCanModify() error {

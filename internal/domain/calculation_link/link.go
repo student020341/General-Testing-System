@@ -51,12 +51,20 @@ func New(input CreateLinkInput) (*Link, error) {
 		return nil, ErrSourceTestIDBlank
 	}
 
+	if input.Source.OutputType == "" {
+		return nil, ErrSourceOutputTypeBlank
+	}
+
 	if input.Target.ID == "" {
 		return nil, ErrTargetIDBlank
 	}
 
 	if input.Target.TestID == "" {
 		return nil, ErrTargetTestIDBlank
+	}
+
+	if input.Target.InputName == "" {
+		return nil, ErrTargetInputNameBlank
 	}
 
 	return &Link{

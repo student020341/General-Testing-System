@@ -2,6 +2,7 @@ package memorymap
 
 import (
 	"context"
+	"errors"
 	"test-system/internal/domain/report"
 )
 
@@ -37,8 +38,11 @@ func (r ReportRepository) GetByID(
 	ctx context.Context,
 	id string,
 ) (*report.Report, error) {
-	report, err := r.BaseRepository.GetByID(id)
-	return reportToDomain(report), err
+	re, err := r.BaseRepository.GetByID(id)
+	if errors.Is(err, ErrNotFound) {
+		return nil, report.ErrNotFound
+	}
+	return reportToDomain(re), err
 }
 
 func (r ReportRepository) Search(

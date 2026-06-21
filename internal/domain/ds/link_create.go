@@ -2,6 +2,7 @@ package ds
 
 import (
 	"context"
+	"slices"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
 	"test-system/internal/domain/labtest"
@@ -72,12 +73,39 @@ func (c CalculationLinkCreate) Create(
 		return nil, calculationlink.ErrTargetIDBlank
 	}
 
-	if _, err := c.calcRepo.GetByID(ctx, input.Source.ID); err != nil {
+	sourceCalc, err := c.calcRepo.GetByID(ctx, input.Source.ID)
+	if err != nil {
 		return nil, err
 	}
 
-	if _, err := c.calcRepo.GetByID(ctx, input.Target.ID); err != nil {
+	targetCalc, err := c.calcRepo.GetByID(ctx, input.Target.ID)
+	if err != nil {
 		return nil, err
+	}
+
+	// TODO some of this should definitely live in the domain
+	// validate source output
+	if input.Source.OutputType == "single" && !sourceCalc.ClosureDetails.HasSingleReturn {
+		return nil, calculationlink.ErrOutputTypeNoSingleReturn
+	}
+
+	if input.Source.OutputType == "array" && !sourceCalc.ClosureDetails.HasArrayReturn {
+		return nil, calculationlink.ErrOutputTypeNoArrayReturn
+	}
+
+	if input.Source.OutputType == "key" {
+		if input.Source.OutputName == "" {
+			return nil, calculationlink.ErrOutoutTypeKeyBlank
+		}
+		if !slices.Contains(sourceCalc.ClosureDetails.KeyedReturnFields, input.Source.OutputName) {
+			return nil, calculationlink.ErrOutputTypeNoKeyReturn
+		}
+	}
+
+	// TODO should this live in the domain somehow? thoughts: domain objects gain actions, other domain objects receieve them here and pass as interfaces
+	// ensure target input exists in parameter list
+	if !slices.Contains(targetCalc.ClosureDetails.Parameters, input.Target.InputName) {
+		return nil, calculationlink.ErrTargetInputNotInParamList
 	}
 
 	return calculationlink.New(input)

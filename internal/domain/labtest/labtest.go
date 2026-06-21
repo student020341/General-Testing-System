@@ -29,7 +29,6 @@ type TestFields struct {
 }
 
 type CreateTestInput struct {
-	ID       string
 	ReportID string
 	TestFields
 }
