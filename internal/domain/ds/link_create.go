@@ -2,7 +2,7 @@ package ds
 
 import (
 	"context"
-	"slices"
+	adapter "test-system/internal/adapter/calculation"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
 	"test-system/internal/domain/labtest"
@@ -83,29 +83,19 @@ func (c CalculationLinkCreate) Create(
 		return nil, err
 	}
 
-	// TODO some of this should definitely live in the domain
+	// because the link domain does not own these concepts, the validation is done here
+	// with the help of adapters
+
 	// validate source output
-	if input.Source.OutputType == "single" && !sourceCalc.ClosureDetails.HasSingleReturn {
-		return nil, calculationlink.ErrOutputTypeNoSingleReturn
+	sourceValidator := adapter.LinkOutputValidator{Calculation: *sourceCalc}
+	if err := sourceValidator.EnsureValidSourceOutput(input.Source); err != nil {
+		return nil, err
 	}
 
-	if input.Source.OutputType == "array" && !sourceCalc.ClosureDetails.HasArrayReturn {
-		return nil, calculationlink.ErrOutputTypeNoArrayReturn
-	}
-
-	if input.Source.OutputType == "key" {
-		if input.Source.OutputName == "" {
-			return nil, calculationlink.ErrOutoutTypeKeyBlank
-		}
-		if !slices.Contains(sourceCalc.ClosureDetails.KeyedReturnFields, input.Source.OutputName) {
-			return nil, calculationlink.ErrOutputTypeNoKeyReturn
-		}
-	}
-
-	// TODO should this live in the domain somehow? thoughts: domain objects gain actions, other domain objects receieve them here and pass as interfaces
 	// ensure target input exists in parameter list
-	if !slices.Contains(targetCalc.ClosureDetails.Parameters, input.Target.InputName) {
-		return nil, calculationlink.ErrTargetInputNotInParamList
+	targetValidator := adapter.LinkTargetInputValidator{Calculation: *targetCalc}
+	if err := targetValidator.EnsureValidTargetInput(input.Target); err != nil {
+		return nil, err
 	}
 
 	return calculationlink.New(input)
