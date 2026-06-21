@@ -12,3 +12,26 @@ lab test run
         idea: labtestinput domain that has its own repository and parent test id similar to calculation
         ^handle any additional needs via domain service, similar to calculation->test actions
     ability to build dependency graphs between calculations, verify if all tests can be run, and then execute them all
+
+test run / calculation execution ideas
+    test domain service
+        verify all test inputs are filled in before trying to eval?
+    calculation domain or service
+        domain calculation has the function to execute the calculation and receives parameters
+        calculation being solvable might need to be a domain service, though receiving a list of parameters might work for just domain
+    infra/store should have the specialized queries
+        calculation repository
+            FindInitialSolveableByTestID - paginated query to find calculations that have no inputs or test inputs/constants
+            FindUnsolvedByTestID - paginated query for no cached result
+        calculation link repository
+            FindLinksBySourceOutputs - paginated query to find links for source and target, a domain service should then filter those by solved
+    lab test will own domain service that orchestrates solving a full test
+        validate that all test inputs are filled
+        phase 1: initially solveable calculations
+            iterator of calculations that have no inputs or have test inputs/const
+        phase 2: cascade crawl
+            iterator of calculations that have all dependent calculations solved
+            need some mechanism in this phase to avoid loops
+            all calculations have a set result = done
+
+

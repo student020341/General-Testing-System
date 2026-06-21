@@ -3,8 +3,14 @@ package calculation
 import (
 	"fmt"
 
+	"github.com/dop251/goja"
 	"github.com/google/uuid"
 )
+
+type CalculationResult struct {
+	Value  any
+	Solved bool
+}
 
 type Calculation struct {
 	ID             string
@@ -12,6 +18,7 @@ type Calculation struct {
 	Name           string
 	Closure        string
 	ClosureDetails *closureDetails
+	Result         CalculationResult
 }
 
 // CalculationFields is calculation fields that can be edited
@@ -73,6 +80,53 @@ func (c *Calculation) Update(fields CalculationFields) error {
 	}
 
 	c.ClosureDetails = cd
+
+	return nil
+}
+
+// TODO maybe move this, maybe make goja into infra or service, TBD
+// Evaluate executes the calculation closure with the given parameters
+func (c *Calculation) Evaluate(params []any) error {
+	// initialize goja vm
+	vm := goja.New()
+
+	// parse closure and get callable function
+	res, err := vm.RunString(c.Closure)
+	if err != nil {
+		return ErrClosureInvalid
+	}
+
+	callable, ok := goja.AssertFunction(res)
+	if !ok {
+		return ErrClosureNotCallable
+	}
+
+	// verify parameter count
+	jsObj := res.ToObject(vm)
+	paramCount := jsObj.Get("length").ToInteger()
+	if paramCount != int64(len(params)) {
+		return ErrParamCountMismatch
+	}
+
+	// convert parameters to vm args
+	args := make([]goja.Value, len(params))
+	for i, param := range params {
+		args[i] = vm.ToValue(param)
+	}
+
+	// execute
+	output, err := callable(
+		goja.Undefined(), // calling context
+		args...,
+	)
+	if err != nil {
+		return err
+	}
+
+	c.Result = CalculationResult{
+		Value:  output.Export(),
+		Solved: true,
+	}
 
 	return nil
 }
