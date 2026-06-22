@@ -45,6 +45,35 @@ func (r TestInputRepository) GetByID(
 	return testInputToDomain(input), err
 }
 
+func (r TestInputRepository) Search(
+	ctx context.Context,
+	search testinput.Search,
+) ([]testinput.TestInput, error) {
+	res, err := r.BaseRepository.Search(
+		search.Paging,
+		func(dti dbTestInput) bool {
+			testMatch := search.TestID == "" || search.TestID == dti.TestID
+			nameMatch := search.Name == "" || search.Name == dti.Name
+			valueMatch := !search.Value.Set || search.Value.Value == dti.Value
+			return testMatch && nameMatch && valueMatch
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	list := make([]testinput.TestInput, len(res))
+	for i, v := range res {
+		d := testInputToDomain(v)
+		if d == nil {
+			d = &testinput.TestInput{}
+		}
+		list[i] = *d
+	}
+
+	return list, nil
+}
+
 func (r TestInputRepository) Save(
 	ctx context.Context,
 	input *testinput.TestInput,

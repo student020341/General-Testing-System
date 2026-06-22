@@ -46,8 +46,7 @@ func (r CalculationLinkRepository) Search(
 	search calculationlink.Search,
 ) ([]calculationlink.Link, error) {
 	res, err := r.BaseRepository.Search(
-		search.Page,
-		search.PageSize,
+		search.Paging,
 		func(l dbCalcLink) bool {
 			// TODO
 			return true

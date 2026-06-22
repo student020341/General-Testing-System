@@ -3,6 +3,7 @@ package calculation
 import (
 	"context"
 	"test-system/internal/domain/calculation"
+	"test-system/internal/shared/paging"
 	"testing"
 
 	"go.uber.org/mock/gomock"
@@ -13,7 +14,7 @@ func TestCalculationsQuery(t *testing.T) {
 	mockCalcRepo := NewMockCalculationRepository(ctrl)
 
 	ctx := context.Background()
-	expectedSearch := calculation.Search{Name: "test-test", Page: 1, PageSize: 10}
+	expectedSearch := calculation.Search{Name: "test-test", Paging: paging.NewPageRequest(1, 10)}
 	expectedResult := []calculation.Calculation{
 		{
 			ID:     "foo",
@@ -27,7 +28,7 @@ func TestCalculationsQuery(t *testing.T) {
 		Return(expectedResult, nil)
 
 	handler := NewListHandler(mockCalcRepo)
-	list, err := handler.Handle(ctx, calculation.Search{Name: "test-test"}.WithBounds())
+	list, err := handler.Handle(ctx, calculation.Search{Name: "test-test", Paging: paging.NewPageRequest(1, 10)})
 	if err != nil {
 		t.Fatalf("list handler: %v", err)
 	}

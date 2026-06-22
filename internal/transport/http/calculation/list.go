@@ -7,6 +7,7 @@ import (
 	"strconv"
 	appCalc "test-system/internal/app/calculation"
 	"test-system/internal/domain/calculation"
+	"test-system/internal/shared/paging"
 )
 
 type ListHandler struct {
@@ -26,10 +27,9 @@ func (h ListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
 
 	input := calculation.Search{
-		TestID:   testFilter,
-		Name:     nameFilter,
-		Page:     page,
-		PageSize: pageSize,
+		TestID: testFilter,
+		Name:   nameFilter,
+		Paging: paging.NewPageRequest(uint(page), uint(pageSize)),
 	}
 
 	list, err := h.list.Handle(r.Context(), input)

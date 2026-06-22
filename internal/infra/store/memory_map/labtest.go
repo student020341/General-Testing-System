@@ -50,8 +50,7 @@ func (r TestRepository) Search(
 	search labtest.Search,
 ) ([]labtest.Test, error) {
 	res, err := r.BaseRepository.Search(
-		search.Page,
-		search.PageSize,
+		search.Paging,
 		func(dt dbTest) bool {
 			nameMatch := search.Name == "" || dt.Name == search.Name
 			reportMatch := search.ReportID == "" || dt.ReportID == search.ReportID

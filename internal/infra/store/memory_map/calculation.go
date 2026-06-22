@@ -46,8 +46,7 @@ func (r CalculationRepository) Search(
 	search calculation.Search,
 ) ([]calculation.Calculation, error) {
 	res, err := r.BaseRepository.Search(
-		search.Page,
-		search.PageSize,
+		search.Paging,
 		func(dc dbCalc) bool {
 			nameMatch := search.Name == "" || dc.Name == search.Name
 			testMatch := search.TestID == "" || dc.TestID == search.TestID

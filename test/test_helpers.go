@@ -60,6 +60,10 @@ func setupTestServer() TestServer {
 		mux,
 		testTransport.CommandHandlers{
 			Create: appTest.NewCreateHandler(testRepo),
+			Evaluate: appTest.NewEvaluateTestHandler(
+				testInputRepo,
+				calcRepo,
+			),
 		},
 	)
 
@@ -191,8 +195,10 @@ func doRequest[T any](
 	}
 
 	var data T
-	if err := json.Unmarshal(body, &data); err != nil {
-		return nil, fmt.Errorf("parsing response %q: %w", string(body), err)
+	if len(body) > 0 {
+		if err := json.Unmarshal(body, &data); err != nil {
+			return nil, fmt.Errorf("parsing response %q: %w", string(body), err)
+		}
 	}
 
 	return &ParsedResponse[T]{

@@ -2,16 +2,25 @@ package labtest
 
 import (
 	"context"
+	"fmt"
 	"test-system/internal/domain/calculation"
+	"test-system/internal/domain/testinput"
+	"test-system/internal/shared/optional"
+	"test-system/internal/shared/paging"
 )
 
 type EvaluateTestHandler struct {
-	calcRepo calculation.Repository
+	testInputRepo testinput.Repository
+	calcRepo      calculation.Repository
 }
 
-func NewEvaluateTestHandler(calcRepo calculation.Repository) EvaluateTestHandler {
+func NewEvaluateTestHandler(
+	testInputRepo testinput.Repository,
+	calcRepo calculation.Repository,
+) EvaluateTestHandler {
 	return EvaluateTestHandler{
-		calcRepo: calcRepo,
+		testInputRepo: testInputRepo,
+		calcRepo:      calcRepo,
 	}
 }
 
@@ -19,7 +28,19 @@ func (h EvaluateTestHandler) Handle(
 	ctx context.Context,
 	testID string, // TODO
 ) error {
-	// TODO: verify all test inputs are filled in
+	// TODO consider whether all test inputs should be set or permit partial
+	// for now, enforce all are completed
+	if list, err := h.testInputRepo.Search(ctx, testinput.Search{
+		Paging: paging.NewPageRequest(1, 1),
+		TestID: testID,
+		Value: optional.Optional[any]{
+			Set: true,
+		},
+	}); err != nil {
+		return err
+	} else if len(list) != 0 {
+		return fmt.Errorf("test %s has incomplete inputs", testID)
+	}
 
 	// phase 1: run all calculations that have no parameters
 

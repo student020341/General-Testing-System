@@ -54,11 +54,6 @@ func (l LinkOutputTestInputValidator) EnsureValidSourceOutput(
 		return fmt.Errorf("source should be a test input: %w", calculationlink.ErrSourceTypeInvalid)
 	}
 
-	// expect clients to transmit null for unset
-	if l.Value == nil {
-		return calculationlink.ErrTestInputNotSet
-	}
-
 	return nil
 }
 

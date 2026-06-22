@@ -3,6 +3,7 @@ package memorymap
 import (
 	"errors"
 	"slices"
+	"test-system/internal/shared/paging"
 )
 
 var (
@@ -59,21 +60,21 @@ func (r *BaseRepository[T]) Save(
 }
 
 func (r BaseRepository[T]) Search(
-	page, pageSize int,
+	paging paging.PageRequest,
 	matcher func(T) bool,
 ) (list []T, err error) {
-	offset := (page - 1) * pageSize
+	offset := (paging.Page - 1) * paging.PageSize
 	count := 0
 
 	for _, id := range r.iid {
 		e := r.m[id]
 		if matcher(e) {
-			if count < offset {
+			if count < int(offset) {
 				count++
 				continue
 			}
 			list = append(list, e)
-			if len(list) >= pageSize {
+			if len(list) >= int(paging.PageSize) {
 				return
 			}
 		}

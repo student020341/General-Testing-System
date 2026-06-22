@@ -34,4 +34,6 @@ test run / calculation execution ideas
             need some mechanism in this phase to avoid loops
             all calculations have a set result = done
 
+test layout consideration
+    data to describe how positions are organized in view to user
 

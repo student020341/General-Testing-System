@@ -50,8 +50,7 @@ func (r ReportRepository) Search(
 	search report.Search,
 ) ([]report.Report, error) {
 	res, err := r.BaseRepository.Search(
-		search.Page,
-		search.PageSize,
+		search.Paging,
 		func(dr dbReport) bool {
 			nameMatch := search.Name == "" || dr.Name == search.Name
 			statusMatch := search.Status == "" || dr.Status == search.Status

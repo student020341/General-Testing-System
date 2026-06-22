@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"test-system/internal/domain/report"
+	"test-system/internal/shared/paging"
 	"testing"
 )
 
@@ -32,7 +33,7 @@ func TestReportRepoBasics(t *testing.T) {
 	}
 
 	// quick paging test
-	s := report.Search{Page: 1, PageSize: 2}
+	s := report.Search{Paging: paging.NewPageRequest(1, 2)}
 	list, err := repo.Search(ctx, s)
 	if err != nil {
 		t.Fatalf("empty collection search: %v", err)
@@ -54,7 +55,7 @@ func TestReportRepoBasics(t *testing.T) {
 		})
 	}
 
-	s.PageSize = 10
+	s.Paging.PageSize = 10
 	list, err = repo.Search(ctx, s)
 	if err != nil {
 		t.Fatalf("search 10: %v", err)
@@ -64,7 +65,7 @@ func TestReportRepoBasics(t *testing.T) {
 	}
 
 	// fetch page 1
-	s.PageSize = 2
+	s.Paging.PageSize = 2
 	list, err = repo.Search(ctx, s)
 	if err != nil {
 		t.Fatalf("search page 1 size 2: %v", err)
@@ -79,7 +80,7 @@ func TestReportRepoBasics(t *testing.T) {
 	}
 
 	// fetch page 2
-	s.Page = 2
+	s.Paging.Page = 2
 	list, err = repo.Search(ctx, s)
 	if err != nil {
 		t.Fatalf("search page 2 size 2: %v", err)
@@ -94,7 +95,7 @@ func TestReportRepoBasics(t *testing.T) {
 	}
 
 	// fetch page 3
-	s.Page = 3
+	s.Paging.Page = 3
 	list, err = repo.Search(ctx, s)
 	if err != nil {
 		t.Fatalf("search page 3 size 2: %v", err)
@@ -109,7 +110,7 @@ func TestReportRepoBasics(t *testing.T) {
 	}
 
 	// fetch page 4
-	s.Page = 4
+	s.Paging.Page = 4
 	list, err = repo.Search(ctx, s)
 	if err != nil {
 		t.Fatalf("search page 4, size 2: %v", err)
@@ -120,8 +121,8 @@ func TestReportRepoBasics(t *testing.T) {
 	}
 
 	// status search
-	s.Page = 1
-	s.PageSize = 10
+	s.Paging.Page = 1
+	s.Paging.PageSize = 10
 	s.Status = report.StatusOpen
 	list, err = repo.Search(ctx, s)
 	if err != nil {

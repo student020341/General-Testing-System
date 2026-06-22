@@ -1,10 +1,12 @@
 package calculationlink
 
-import "context"
+import (
+	"context"
+	"test-system/internal/shared/paging"
+)
 
 type Search struct {
-	Page     int
-	PageSize int
+	Paging paging.PageRequest
 }
 
 type Repository interface {

@@ -1,12 +1,14 @@
 package report
 
-import "context"
+import (
+	"context"
+	"test-system/internal/shared/paging"
+)
 
 type Search struct {
-	Status   Status
-	Name     string
-	Page     int
-	PageSize int
+	Status Status
+	Name   string
+	Paging paging.PageRequest
 }
 
 type Repository interface {

@@ -6,7 +6,8 @@ import (
 )
 
 type CommandHandlers struct {
-	Create labtest.CreateHandler
+	Create   labtest.CreateHandler
+	Evaluate labtest.EvaluateTestHandler
 }
 
 func RegisterRoutes(mux *http.ServeMux, cmds CommandHandlers) {
@@ -14,6 +15,8 @@ func RegisterRoutes(mux *http.ServeMux, cmds CommandHandlers) {
 
 	// commands
 	createHandler := NewCreateHandler(cmds.Create)
+	evaluateHandler := NewEvaluateHandler(cmds.Evaluate)
 
 	mux.Handle("POST /tests", createHandler)
+	mux.Handle("POST /tests/{id}/evaluate", evaluateHandler)
 }

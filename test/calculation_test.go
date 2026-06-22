@@ -1,9 +1,6 @@
 package test
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
 	"slices"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
@@ -257,21 +254,36 @@ func TestCalculationE2E(t *testing.T) {
 		tf.Equal(l.Target.InputName, "a", "target input name")
 	})
 
-	t.Run("scratch", func(t *testing.T) {
-		// temporary space while figuring out what's next
-
-		links, err := ts.calcLinkRepo.Search(
-			context.Background(),
-			calculationlink.Search{
-				Page:     1,
-				PageSize: 10,
-			},
+	t.Run("test eval", func(t *testing.T) {
+		req, err := ts.makeRequest(
+			ts.requestWithMethod("POST"),
+			ts.requestWithPath("/tests/"+testID+"/evaluate"),
 		)
-		tf.Ok(err, "search links")
+		tf.Ok(err, "evaluate request")
 
-		jb, _ := json.MarshalIndent(links, "", "  ")
-		fmt.Println("links", string(jb))
+		res, err := doRequest[any](
+			ts.server.Client(),
+			req,
+		)
+		tf.Ok(err, "evaluate test")
+		tf.Equal(res.Status, 204, "response status")
 	})
+
+	// t.Run("scratch", func(t *testing.T) {
+	// 	// temporary space while figuring out what's next
+
+	// 	links, err := ts.calcLinkRepo.Search(
+	// 		context.Background(),
+	// 		calculationlink.Search{
+	// 			Page:     1,
+	// 			PageSize: 10,
+	// 		},
+	// 	)
+	// 	tf.Ok(err, "search links")
+
+	// 	jb, _ := json.MarshalIndent(links, "", "  ")
+	// 	fmt.Println("links", string(jb))
+	// })
 
 	// TODO test calculation eval and link eval
 	// TODO try to make unit tests for these first?

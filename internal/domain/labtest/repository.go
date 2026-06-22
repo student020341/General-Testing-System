@@ -1,12 +1,14 @@
 package labtest
 
-import "context"
+import (
+	"context"
+	"test-system/internal/shared/paging"
+)
 
 type Search struct {
 	ReportID string
 	Name     string
-	Page     int
-	PageSize int
+	Paging   paging.PageRequest
 }
 
 type Repository interface {
