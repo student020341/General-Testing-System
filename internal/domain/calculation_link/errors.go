@@ -16,4 +16,6 @@ var (
 	ErrOutputTypeNoArrayReturn   = errors.New("output type is array but calculation has no array return")
 	ErrOutoutTypeKeyBlank        = errors.New("map output name cannot be blank")
 	ErrOutputTypeNoKeyReturn     = errors.New("output type is key but calculation does not contain the specified key")
+	ErrSourceTypeInvalid         = errors.New("source type is invalid")
+	ErrTestInputNotSet           = errors.New("test input not set")
 )

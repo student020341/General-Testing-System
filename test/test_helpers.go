@@ -11,16 +11,19 @@ import (
 	appCalcLink "test-system/internal/app/calculation_link"
 	appTest "test-system/internal/app/labtest"
 	appReport "test-system/internal/app/report"
+	appTestInput "test-system/internal/app/testinput"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
 	"test-system/internal/domain/ds"
 	"test-system/internal/domain/labtest"
 	"test-system/internal/domain/report"
+	"test-system/internal/domain/testinput"
 	memorymap "test-system/internal/infra/store/memory_map"
 	calculationTransport "test-system/internal/transport/http/calculation"
 	calcLinkTransport "test-system/internal/transport/http/calculation_link"
 	testTransport "test-system/internal/transport/http/labtest"
 	reportTransport "test-system/internal/transport/http/report"
+	testInputTransport "test-system/internal/transport/http/testinput"
 	"testing"
 )
 
@@ -29,11 +32,12 @@ import (
 //
 
 type TestServer struct {
-	calcRepo     calculation.Repository
-	testRepo     labtest.Repository
-	reportRepo   report.Repository
-	calcLinkRepo calculationlink.Repository
-	server       *httptest.Server
+	calcRepo      calculation.Repository
+	testRepo      labtest.Repository
+	reportRepo    report.Repository
+	calcLinkRepo  calculationlink.Repository
+	testInputRepo testinput.Repository
+	server        *httptest.Server
 }
 
 func setupTestServer() TestServer {
@@ -41,6 +45,7 @@ func setupTestServer() TestServer {
 	testRepo := memorymap.NewTestRepository()
 	reportRepo := memorymap.NewReportRepository()
 	calcLinkRepo := memorymap.NewCalculationLinkRepository()
+	testInputRepo := memorymap.NewTestInputRepository()
 
 	mux := http.NewServeMux()
 
@@ -91,19 +96,28 @@ func setupTestServer() TestServer {
 					calcRepo,
 					testRepo,
 					reportRepo,
+					testInputRepo,
 				),
 			),
+		},
+	)
+
+	testInputTransport.RegisterRoutes(
+		mux,
+		testInputTransport.CommandHandlers{
+			Create: appTestInput.NewCreateHandler(testInputRepo),
 		},
 	)
 
 	server := httptest.NewServer(mux)
 
 	return TestServer{
-		calcRepo:     calcRepo,
-		testRepo:     testRepo,
-		reportRepo:   reportRepo,
-		calcLinkRepo: calcLinkRepo,
-		server:       server,
+		calcRepo:      calcRepo,
+		testRepo:      testRepo,
+		reportRepo:    reportRepo,
+		calcLinkRepo:  calcLinkRepo,
+		testInputRepo: testInputRepo,
+		server:        server,
 	}
 }
 

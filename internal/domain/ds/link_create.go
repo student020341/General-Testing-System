@@ -7,23 +7,27 @@ import (
 	calculationlink "test-system/internal/domain/calculation_link"
 	"test-system/internal/domain/labtest"
 	"test-system/internal/domain/report"
+	"test-system/internal/domain/testinput"
 )
 
 type CalculationLinkCreate struct {
-	calcRepo   calculation.Repository
-	testRepo   labtest.Repository
-	reportRepo report.Repository
+	calcRepo      calculation.Repository
+	testRepo      labtest.Repository
+	reportRepo    report.Repository
+	testInputRepo testinput.Repository
 }
 
 func NewCalculationLinkCreate(
 	calcRepo calculation.Repository,
 	testRepo labtest.Repository,
 	reportRepo report.Repository,
+	testInputRepo testinput.Repository,
 ) CalculationLinkCreate {
 	return CalculationLinkCreate{
-		calcRepo:   calcRepo,
-		testRepo:   testRepo,
-		reportRepo: reportRepo,
+		calcRepo:      calcRepo,
+		testRepo:      testRepo,
+		reportRepo:    reportRepo,
+		testInputRepo: testInputRepo,
 	}
 }
 
@@ -73,22 +77,34 @@ func (c CalculationLinkCreate) Create(
 		return nil, calculationlink.ErrTargetIDBlank
 	}
 
-	sourceCalc, err := c.calcRepo.GetByID(ctx, input.Source.ID)
-	if err != nil {
+	// because the link domain does not own these concepts, the validation is done here
+	// with the help of adapters
+
+	var sourceValidator calculationlink.LinkSourceOutputValidator
+	if input.Source.OutputType == string(calculationlink.OutputTypeInput) {
+		ti, err := c.testInputRepo.GetByID(ctx, input.Source.ID)
+		if err != nil {
+			return nil, err
+		}
+		sourceValidator = adapter.LinkOutputTestInputValidator{
+			TestInput: *ti,
+		}
+	} else {
+		sourceCalc, err := c.calcRepo.GetByID(ctx, input.Source.ID)
+		if err != nil {
+			return nil, err
+		}
+		sourceValidator = adapter.LinkOutputCalculationValidator{
+			Calculation: *sourceCalc,
+		}
+	}
+
+	if err := sourceValidator.EnsureValidSourceOutput(input.Source); err != nil {
 		return nil, err
 	}
 
 	targetCalc, err := c.calcRepo.GetByID(ctx, input.Target.ID)
 	if err != nil {
-		return nil, err
-	}
-
-	// because the link domain does not own these concepts, the validation is done here
-	// with the help of adapters
-
-	// validate source output
-	sourceValidator := adapter.LinkOutputValidator{Calculation: *sourceCalc}
-	if err := sourceValidator.EnsureValidSourceOutput(input.Source); err != nil {
 		return nil, err
 	}
 

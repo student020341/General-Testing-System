@@ -41,6 +41,26 @@ func (r CalculationLinkRepository) GetByID(
 	return calcLinkToDomain(link), err
 }
 
+func (r CalculationLinkRepository) Search(
+	ctx context.Context,
+	search calculationlink.Search,
+) ([]calculationlink.Link, error) {
+	res, err := r.BaseRepository.Search(
+		search.Page,
+		search.PageSize,
+		func(l dbCalcLink) bool {
+			// TODO
+			return true
+		},
+	)
+
+	var links []calculationlink.Link
+	for _, link := range res {
+		links = append(links, *calcLinkToDomain(link))
+	}
+	return links, err
+}
+
 func (r CalculationLinkRepository) Save(
 	ctx context.Context,
 	link *calculationlink.Link,

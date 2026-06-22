@@ -1,11 +1,15 @@
 package test
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"slices"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
 	"test-system/internal/domain/labtest"
 	"test-system/internal/domain/report"
+	"test-system/internal/domain/testinput"
 	"testing"
 )
 
@@ -18,6 +22,7 @@ func TestCalculationE2E(t *testing.T) {
 	var reportID string
 	var testID string
 	var calculationID string
+	var testInputID string
 	testClosure := `(a, b) => a+b`
 
 	// TODO plan better e2e testing
@@ -150,14 +155,14 @@ func TestCalculationE2E(t *testing.T) {
 		linkInput := calculationlink.CreateLinkInput{
 			ReportID: reportID,
 			Source: calculationlink.Source{
-				CalculationRef: calculationlink.CalculationRef{
+				TestEntityRef: calculationlink.TestEntityRef{
 					ID:     calculationID,
 					TestID: testID,
 				},
 				OutputType: "single",
 			},
 			Target: calculationlink.Target{
-				CalculationRef: calculationlink.CalculationRef{
+				TestEntityRef: calculationlink.TestEntityRef{
 					ID:     res.Data.ID,
 					TestID: testID,
 				},
@@ -180,10 +185,92 @@ func TestCalculationE2E(t *testing.T) {
 		tf.Equal(res2.Status, 201, "response status")
 		tf.NotNil(res2.Data, "response data")
 		l := res2.Data
-		tf.Equal(l.Source.CalculationRef.ID, calculationID, "source calculation id")
-		tf.Equal(l.Target.CalculationRef.ID, res.Data.ID, "target calculation id")
+		tf.Equal(l.Source.TestEntityRef.ID, calculationID, "source calculation id")
+		tf.Equal(l.Target.TestEntityRef.ID, res.Data.ID, "target calculation id")
 		tf.Equal(l.Source.OutputType, "single", "source output type")
 		tf.Equal(l.Target.InputName, "c", "target input name")
+	})
+
+	t.Run("create test input and link", func(t *testing.T) {
+		// create test input
+		input := testinput.TestInputCreateInput{
+			TestID: testID, // TODO there might not be a validator on this
+			Type:   testinput.TestInputTypeVariable,
+			Name:   "Something",
+			Value:  3,
+		}
+
+		req, err := ts.makeRequest(
+			ts.requestWithMethod("POST"),
+			ts.requestWithPath("/test-inputs"),
+			ts.requestWithPayload(input),
+		)
+		tf.Ok(err, "create request")
+
+		res, err := doRequest[*testinput.TestInput](
+			ts.server.Client(),
+			req,
+		)
+		tf.Ok(err, "create test input")
+		tf.Equal(res.Status, 201, "response status")
+		tf.NotNil(res.Data, "response data")
+
+		testInputID = res.Data.ID
+
+		// link to calculation
+		linkInput := calculationlink.CreateLinkInput{
+			ReportID: reportID,
+			Source: calculationlink.Source{
+				TestEntityRef: calculationlink.TestEntityRef{
+					ID:     testInputID,
+					TestID: testID,
+				},
+				OutputType: "input",
+			},
+			Target: calculationlink.Target{
+				TestEntityRef: calculationlink.TestEntityRef{
+					ID:     calculationID,
+					TestID: testID,
+				},
+				InputName: "a", // TODO ensure multiple links don't target the same parameter
+			},
+		}
+
+		req, err = ts.makeRequest(
+			ts.requestWithMethod("POST"),
+			ts.requestWithPath("/calculation-link"),
+			ts.requestWithPayload(linkInput),
+		)
+		tf.Ok(err, "create request")
+
+		res2, err := doRequest[*calculationlink.Link](
+			ts.server.Client(),
+			req,
+		)
+		tf.Ok(err, "create link")
+		tf.Equal(res2.Status, 201, "response status")
+		tf.NotNil(res2.Data, "response data")
+		l := res2.Data
+		tf.Equal(l.Source.TestEntityRef.ID, testInputID, "source test input id")
+		tf.Equal(l.Target.TestEntityRef.ID, calculationID, "target calculation id")
+		tf.Equal(l.Source.OutputType, "input", "source output type")
+		tf.Equal(l.Target.InputName, "a", "target input name")
+	})
+
+	t.Run("scratch", func(t *testing.T) {
+		// temporary space while figuring out what's next
+
+		links, err := ts.calcLinkRepo.Search(
+			context.Background(),
+			calculationlink.Search{
+				Page:     1,
+				PageSize: 10,
+			},
+		)
+		tf.Ok(err, "search links")
+
+		jb, _ := json.MarshalIndent(links, "", "  ")
+		fmt.Println("links", string(jb))
 	})
 
 	// TODO test calculation eval and link eval

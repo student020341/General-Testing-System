@@ -2,22 +2,36 @@ package calculationlink
 
 import "github.com/google/uuid"
 
-// CalculationRef is a minimal struct to reference a calculation
-type CalculationRef struct {
+// TestEntityRef is a minimal struct to reference a calculation or test input
+type TestEntityRef struct {
 	ID     string
 	TestID string
 }
 
+type OutputType string
+
+const (
+	// a single returned value from another calculation
+	OutputTypeSingle OutputType = "single"
+	// an array response from another calculation
+	OutputTypeArray OutputType = "array"
+	// a key from a map return from another calculation
+	OutputTypeKeyed OutputType = "keyed"
+	// a test input or constant
+	OutputTypeInput OutputType = "input"
+)
+
 type Source struct {
-	CalculationRef
+	TestEntityRef
 	// single, array, or keyed (based on domain calculation closure details)
+	// or input (based on a test input)
 	OutputType string
 	// optional output name if the output is a map with keys
 	OutputName string
 }
 
 type Target struct {
-	CalculationRef
+	TestEntityRef
 	// parameter name from closure details
 	InputName string
 }

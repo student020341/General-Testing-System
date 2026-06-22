@@ -1,31 +1,38 @@
 package calculation
 
 import (
+	"fmt"
 	"slices"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
+	"test-system/internal/domain/testinput"
 )
 
-var _ calculationlink.LinkSourceOutputValidator = (*LinkOutputValidator)(nil)
+var _ calculationlink.LinkSourceOutputValidator = (*LinkOutputCalculationValidator)(nil)
+var _ calculationlink.LinkSourceOutputValidator = (*LinkOutputTestInputValidator)(nil)
 var _ calculationlink.LinkTargetInputValidator = (*LinkTargetInputValidator)(nil)
 
-type LinkOutputValidator struct {
+type LinkOutputCalculationValidator struct {
 	calculation.Calculation
 }
 
-func (l LinkOutputValidator) EnsureValidSourceOutput(
+func (l LinkOutputCalculationValidator) EnsureValidSourceOutput(
 	source calculationlink.Source,
 ) error {
+	if source.OutputType == string(calculationlink.OutputTypeInput) {
+		return fmt.Errorf("source should be a calculation: %w", calculationlink.ErrSourceTypeInvalid)
+	}
+
 	switch source.OutputType {
-	case "single":
+	case string(calculationlink.OutputTypeSingle):
 		if !l.ClosureDetails.HasSingleReturn {
 			return calculationlink.ErrOutputTypeNoSingleReturn
 		}
-	case "array":
+	case string(calculationlink.OutputTypeArray):
 		if !l.ClosureDetails.HasArrayReturn {
 			return calculationlink.ErrOutputTypeNoArrayReturn
 		}
-	case "key":
+	case string(calculationlink.OutputTypeKeyed):
 		if source.OutputName == "" {
 			return calculationlink.ErrOutoutTypeKeyBlank
 		}
@@ -33,6 +40,25 @@ func (l LinkOutputValidator) EnsureValidSourceOutput(
 			return calculationlink.ErrOutputTypeNoKeyReturn
 		}
 	}
+	return nil
+}
+
+type LinkOutputTestInputValidator struct {
+	testinput.TestInput
+}
+
+func (l LinkOutputTestInputValidator) EnsureValidSourceOutput(
+	source calculationlink.Source,
+) error {
+	if source.OutputType != string(calculationlink.OutputTypeInput) {
+		return fmt.Errorf("source should be a test input: %w", calculationlink.ErrSourceTypeInvalid)
+	}
+
+	// expect clients to transmit null for unset
+	if l.Value == nil {
+		return calculationlink.ErrTestInputNotSet
+	}
+
 	return nil
 }
 

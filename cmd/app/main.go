@@ -8,12 +8,14 @@ import (
 	appCalcLink "test-system/internal/app/calculation_link"
 	appTest "test-system/internal/app/labtest"
 	appReport "test-system/internal/app/report"
+	appTestInput "test-system/internal/app/testinput"
 	"test-system/internal/domain/ds"
 	memorymap "test-system/internal/infra/store/memory_map"
 	"test-system/internal/transport/http/calculation"
 	calculationlink "test-system/internal/transport/http/calculation_link"
 	"test-system/internal/transport/http/labtest"
 	"test-system/internal/transport/http/report"
+	"test-system/internal/transport/http/testinput"
 )
 
 func main() {
@@ -22,6 +24,7 @@ func main() {
 	testRepo := memorymap.NewTestRepository()
 	reportRepo := memorymap.NewReportRepository()
 	calcLinkRepo := memorymap.NewCalculationLinkRepository()
+	testInputRepo := memorymap.NewTestInputRepository()
 
 	// transport wiring
 	mux := http.NewServeMux()
@@ -73,8 +76,16 @@ func main() {
 					calcRepo,
 					testRepo,
 					reportRepo,
+					testInputRepo,
 				),
 			),
+		},
+	)
+
+	testinput.RegisterRoutes(
+		mux,
+		testinput.CommandHandlers{
+			Create: appTestInput.NewCreateHandler(testInputRepo),
 		},
 	)
 
