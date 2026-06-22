@@ -2,6 +2,7 @@ package labtest
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
@@ -87,6 +88,8 @@ func (h EvaluateTestHandler) Handle(
 	for inputParamIt.Next(ctx) {
 		calc := inputParamIt.Value()
 		fmt.Println("calc with only inputs", calc.Root.Name)
+		jb, _ := json.MarshalIndent(calc, "", "  ")
+		fmt.Println(string(jb))
 	}
 	if err := inputParamIt.Error(); err != nil {
 		return err

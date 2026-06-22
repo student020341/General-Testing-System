@@ -37,3 +37,6 @@ test run / calculation execution ideas
 test layout consideration
     data to describe how positions are organized in view to user
 
+calculation eval input type
+    map[string]any constructed from links
+    calculation eval will extract and sort inputs with its own closure details
