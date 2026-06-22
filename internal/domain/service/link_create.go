@@ -1,4 +1,4 @@
-package ds
+package service
 
 import (
 	"context"

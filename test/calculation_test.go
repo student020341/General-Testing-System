@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"slices"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
@@ -252,6 +253,32 @@ func TestCalculationE2E(t *testing.T) {
 		tf.Equal(l.Target.TestEntityRef.ID, calculationID, "target calculation id")
 		tf.Equal(l.Source.OutputType, "input", "source output type")
 		tf.Equal(l.Target.InputName, "a", "target input name")
+	})
+
+	t.Run("create many calculations that have no dependencies", func(t *testing.T) {
+		for i := 0; i < 12; i++ {
+			input := calculation.CreateCalculationInput{
+				TestID: testID,
+				CalculationFields: calculation.CalculationFields{
+					Name:    fmt.Sprintf("No Dep Calc #%d", i+1),
+					Closure: fmt.Sprintf("() => %d", i+1),
+				},
+			}
+
+			req, err := ts.makeRequest(
+				ts.requestWithMethod("POST"),
+				ts.requestWithPath("/calculations"),
+				ts.requestWithPayload(input),
+			)
+			tf.Ok(err, "create calculation request")
+
+			res, err := doRequest[*calculation.Calculation](
+				ts.server.Client(),
+				req,
+			)
+			tf.Ok(err, "create calculation")
+			tf.Equal(res.Status, 201, "response status")
+		}
 	})
 
 	t.Run("test eval", func(t *testing.T) {

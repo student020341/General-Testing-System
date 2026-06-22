@@ -6,7 +6,8 @@ import (
 )
 
 type Search struct {
-	Paging paging.PageRequest
+	TargetID string
+	Paging   paging.PageRequest
 }
 
 type Repository interface {

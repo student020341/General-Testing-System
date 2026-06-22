@@ -14,9 +14,9 @@ import (
 	appTestInput "test-system/internal/app/testinput"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
-	"test-system/internal/domain/ds"
 	"test-system/internal/domain/labtest"
 	"test-system/internal/domain/report"
+	"test-system/internal/domain/service"
 	"test-system/internal/domain/testinput"
 	memorymap "test-system/internal/infra/store/memory_map"
 	calculationTransport "test-system/internal/transport/http/calculation"
@@ -46,6 +46,11 @@ func setupTestServer() TestServer {
 	reportRepo := memorymap.NewReportRepository()
 	calcLinkRepo := memorymap.NewCalculationLinkRepository()
 	testInputRepo := memorymap.NewTestInputRepository()
+	calcLinksQuery := memorymap.NewCalculationWithLinksQuery(
+		*testInputRepo,
+		*calcRepo,
+		*calcLinkRepo,
+	)
 
 	mux := http.NewServeMux()
 
@@ -63,6 +68,8 @@ func setupTestServer() TestServer {
 			Evaluate: appTest.NewEvaluateTestHandler(
 				testInputRepo,
 				calcRepo,
+				calcLinkRepo,
+				calcLinksQuery,
 			),
 		},
 	)
@@ -76,14 +83,14 @@ func setupTestServer() TestServer {
 		calculationTransport.CommandHandlers{
 			Create: appCalc.NewCreateHandler(
 				calcRepo,
-				ds.NewCalculationCreate(
+				service.NewCalculationCreate(
 					calcRepo,
 					testRepo,
 				),
 			),
 			Update: appCalc.NewUpdateHandler(
 				calcRepo,
-				ds.NewCalculationModifiableGuard(
+				service.NewCalculationModifiableGuard(
 					testRepo,
 					reportRepo,
 				),
@@ -96,7 +103,7 @@ func setupTestServer() TestServer {
 		calcLinkTransport.CommandHandlers{
 			Create: appCalcLink.NewCreateHandler(
 				calcLinkRepo,
-				ds.NewCalculationLinkCreate(
+				service.NewCalculationLinkCreate(
 					calcRepo,
 					testRepo,
 					reportRepo,

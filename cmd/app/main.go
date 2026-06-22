@@ -9,7 +9,7 @@ import (
 	appTest "test-system/internal/app/labtest"
 	appReport "test-system/internal/app/report"
 	appTestInput "test-system/internal/app/testinput"
-	"test-system/internal/domain/ds"
+	"test-system/internal/domain/service"
 	memorymap "test-system/internal/infra/store/memory_map"
 	"test-system/internal/transport/http/calculation"
 	calculationlink "test-system/internal/transport/http/calculation_link"
@@ -52,14 +52,14 @@ func main() {
 		calculation.CommandHandlers{
 			Create: appCalc.NewCreateHandler(
 				calcRepo,
-				ds.NewCalculationCreate(
+				service.NewCalculationCreate(
 					calcRepo,
 					testRepo,
 				),
 			),
 			Update: appCalc.NewUpdateHandler(
 				calcRepo,
-				ds.NewCalculationModifiableGuard(
+				service.NewCalculationModifiableGuard(
 					testRepo,
 					reportRepo,
 				),
@@ -72,7 +72,7 @@ func main() {
 		calculationlink.CommandHandlers{
 			Create: appCalcLink.NewCreateHandler(
 				calcLinkRepo,
-				ds.NewCalculationLinkCreate(
+				service.NewCalculationLinkCreate(
 					calcRepo,
 					testRepo,
 					reportRepo,

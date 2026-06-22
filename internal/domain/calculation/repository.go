@@ -14,8 +14,10 @@ var (
 
 type Search struct {
 	TestID          string
+	IDs             []string
 	Name            string
 	HasDependencies optional.Optional[bool]
+	IsSolved        optional.Optional[bool]
 	Paging          paging.PageRequest
 }
 

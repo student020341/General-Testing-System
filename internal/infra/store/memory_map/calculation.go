@@ -2,6 +2,7 @@ package memorymap
 
 import (
 	"context"
+	"slices"
 	"test-system/internal/domain/calculation"
 )
 
@@ -50,7 +51,19 @@ func (r CalculationRepository) Search(
 		func(dc dbCalc) bool {
 			nameMatch := search.Name == "" || dc.Name == search.Name
 			testMatch := search.TestID == "" || dc.TestID == search.TestID
-			return nameMatch && testMatch
+			hasDepsMatch := !search.HasDependencies.Set ||
+				(search.HasDependencies.Value && len(dc.ClosureDetails.Parameters) > 0) ||
+				(!search.HasDependencies.Value && len(dc.ClosureDetails.Parameters) == 0)
+			idsMatch := len(search.IDs) == 0 || slices.Contains(search.IDs, dc.ID)
+			solvedMatch := !search.IsSolved.Set ||
+				(search.IsSolved.Value && dc.Result.Solved) ||
+				(!search.IsSolved.Value && !dc.Result.Solved)
+
+			return nameMatch &&
+				testMatch &&
+				hasDepsMatch &&
+				idsMatch &&
+				solvedMatch
 		},
 	)
 	if err != nil {

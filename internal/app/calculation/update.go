@@ -3,17 +3,17 @@ package calculation
 import (
 	"context"
 	"test-system/internal/domain/calculation"
-	"test-system/internal/domain/ds"
+	"test-system/internal/domain/service"
 )
 
 type UpdateHandler struct {
 	calcRepo calculation.Repository
-	calcServ ds.CalculationModifiableGuard // TODO name these better
+	calcServ service.CalculationModifiableGuard // TODO name these better
 }
 
 func NewUpdateHandler(
 	cr calculation.Repository,
-	cuv ds.CalculationModifiableGuard,
+	cuv service.CalculationModifiableGuard,
 ) UpdateHandler {
 	return UpdateHandler{
 		calcRepo: cr,

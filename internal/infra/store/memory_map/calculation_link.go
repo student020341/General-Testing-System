@@ -48,8 +48,8 @@ func (r CalculationLinkRepository) Search(
 	res, err := r.BaseRepository.Search(
 		search.Paging,
 		func(l dbCalcLink) bool {
-			// TODO
-			return true
+			targetMatch := search.TargetID == "" || l.Target.ID == search.TargetID
+			return targetMatch
 		},
 	)
 
