@@ -1,6 +1,10 @@
 package testinput
 
-import "github.com/google/uuid"
+import (
+	"test-system/internal/shared/optional"
+
+	"github.com/google/uuid"
+)
 
 type TestInputType string
 
@@ -17,7 +21,7 @@ type TestInputCreateInput struct {
 	TestID string
 	Type   TestInputType
 	Name   string
-	Value  any
+	Value  optional.Optional[any]
 }
 
 type TestInput struct {
@@ -25,7 +29,7 @@ type TestInput struct {
 	TestID string
 	Type   TestInputType
 	Name   string
-	Value  any
+	Value  optional.Optional[any]
 }
 
 func New(input TestInputCreateInput) (*TestInput, error) {

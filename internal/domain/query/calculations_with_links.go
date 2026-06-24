@@ -2,8 +2,11 @@ package query
 
 import (
 	"context"
+	"fmt"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
+	"test-system/internal/domain/testinput"
+	"test-system/internal/shared/optional"
 	"test-system/internal/shared/paging"
 )
 
@@ -15,6 +18,27 @@ type LinkedEntity struct {
 type CalculationWithLinks struct {
 	Root  calculation.Calculation
 	Links []LinkedEntity
+}
+
+// ToEvalInput transforms linked entities into a map[parameter]value
+func (c CalculationWithLinks) ToEvalInput() (calculation.EvalInput, error) {
+	args := make(calculation.EvalInput)
+
+	for _, le := range c.Links {
+		switch e := le.Entity.(type) {
+		case *calculation.Calculation:
+			args[le.Link.Target.InputName] = optional.Optional[any]{
+				Set:   e.Result.Solved,
+				Value: e.Result.Value,
+			}
+		case *testinput.TestInput:
+			args[le.Link.Target.InputName] = e.Value
+		default:
+			return nil, fmt.Errorf("unexpected entity type: %T", e)
+		}
+	}
+
+	return args, nil
 }
 
 type LinkType string

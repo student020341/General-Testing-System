@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"test-system/internal/domain/calculation"
@@ -8,6 +9,7 @@ import (
 	"test-system/internal/domain/labtest"
 	"test-system/internal/domain/report"
 	"test-system/internal/domain/testinput"
+	"test-system/internal/shared/optional"
 	"testing"
 )
 
@@ -20,6 +22,7 @@ func TestCalculationE2E(t *testing.T) {
 	var reportID string
 	var testID string
 	var calculationID string
+	var finalCalculationID string // final in terms of dependencies on other things
 	var testInputID string
 	testClosure := `(a, b) => a+b`
 
@@ -82,7 +85,7 @@ func TestCalculationE2E(t *testing.T) {
 		input := calculation.CreateCalculationInput{
 			TestID: testID,
 			CalculationFields: calculation.CalculationFields{
-				Name:    "farb",
+				Name:    "first",
 				Closure: testClosure,
 			},
 		}
@@ -148,6 +151,7 @@ func TestCalculationE2E(t *testing.T) {
 		tf.Ok(err, "create calculation")
 		tf.Equal(res.Status, 201, "response status")
 		tf.NotNil(res.Data, "response data")
+		finalCalculationID = res.Data.ID
 
 		// link to first calculation
 		linkInput := calculationlink.CreateLinkInput{
@@ -195,7 +199,7 @@ func TestCalculationE2E(t *testing.T) {
 			TestID: testID, // TODO there might not be a validator on this
 			Type:   testinput.TestInputTypeVariable,
 			Name:   "Something",
-			Value:  3,
+			Value:  optional.New[any](3),
 		}
 
 		req, err := ts.makeRequest(
@@ -256,6 +260,7 @@ func TestCalculationE2E(t *testing.T) {
 	})
 
 	t.Run("create many calculations that have no dependencies", func(t *testing.T) {
+		var lastCalc *calculation.Calculation
 		for i := 0; i < 12; i++ {
 			input := calculation.CreateCalculationInput{
 				TestID: testID,
@@ -278,7 +283,42 @@ func TestCalculationE2E(t *testing.T) {
 			)
 			tf.Ok(err, "create calculation")
 			tf.Equal(res.Status, 201, "response status")
+			lastCalc = res.Data
 		}
+
+		// set last calc as input B of first calculation
+		input := calculationlink.CreateLinkInput{
+			ReportID: reportID,
+			Source: calculationlink.Source{
+				TestEntityRef: calculationlink.TestEntityRef{
+					ID:     lastCalc.ID,
+					TestID: testID,
+				},
+				OutputType: "single",
+			},
+			Target: calculationlink.Target{
+				TestEntityRef: calculationlink.TestEntityRef{
+					ID:     calculationID,
+					TestID: testID,
+				},
+				InputName: "b",
+			},
+		}
+
+		req, err := ts.makeRequest(
+			ts.requestWithMethod("POST"),
+			ts.requestWithPath("/calculation-link"),
+			ts.requestWithPayload(input),
+		)
+		tf.Ok(err, "create link request")
+
+		res, err := doRequest[*calculationlink.Link](
+			ts.server.Client(),
+			req,
+		)
+		tf.Ok(err, "create link")
+		tf.Equal(res.Status, 201, "response status")
+		tf.NotNil(res.Data, "response data")
 	})
 
 	t.Run("test eval", func(t *testing.T) {
@@ -294,6 +334,20 @@ func TestCalculationE2E(t *testing.T) {
 		)
 		tf.Ok(err, "evaluate test")
 		tf.Equal(res.Status, 204, "response status")
+
+		// check if the last calculation is solved
+		calc, err := ts.calcRepo.GetByID(context.Background(), finalCalculationID)
+		tf.Ok(err, "get last calculation")
+		tf.NotNil(calc, "last calculation")
+		tf.Equal(true, false, "calculation is solved") // TODO without the pass loop, this can fail randomly
+
+		// calculation path was:
+		// (c) => 2 * c
+		// c input = output of (a, b) => a+b
+		// a input = test input, set to 3
+		// b input = calculation defined as () => 12
+		// final eval: (c=15) = 2 * 15 = 30
+		tf.Equal(calc.Result.Value, int64(30), "verify calculation result")
 	})
 
 	// t.Run("scratch", func(t *testing.T) {

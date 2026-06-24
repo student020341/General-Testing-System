@@ -2,7 +2,7 @@ package labtest
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
@@ -68,6 +68,9 @@ func (h EvaluateTestHandler) Handle(
 		if err := calc.Evaluate(nil); err != nil {
 			return err
 		}
+		if err := h.calcRepo.Save(ctx, &calc); err != nil {
+			return err
+		}
 	}
 	if err := noParamIt.Error(); err != nil {
 		return err
@@ -87,9 +90,17 @@ func (h EvaluateTestHandler) Handle(
 	)
 	for inputParamIt.Next(ctx) {
 		calc := inputParamIt.Value()
-		fmt.Println("calc with only inputs", calc.Root.Name)
-		jb, _ := json.MarshalIndent(calc, "", "  ")
-		fmt.Println(string(jb))
+		args, err := calc.ToEvalInput()
+		if err != nil {
+			// TODO dedicated pass to add more information to all errors
+			return err
+		}
+		if err := calc.Root.Evaluate(args); err != nil {
+			return err
+		}
+		if err := h.calcRepo.Save(ctx, &calc.Root); err != nil {
+			return err
+		}
 	}
 	if err := inputParamIt.Error(); err != nil {
 		return err
@@ -110,7 +121,27 @@ func (h EvaluateTestHandler) Handle(
 	)
 	for bothParamIt.Next(ctx) {
 		calc := bothParamIt.Value()
-		fmt.Println("calc with any links", calc.Root.Name)
+		args, err := calc.ToEvalInput()
+		if err != nil {
+			return err
+		}
+
+		err = calc.Root.Evaluate(args)
+		if errors.Is(err, calculation.ErrIncompleteEvalInput) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+
+		if err := h.calcRepo.Save(ctx, &calc.Root); err != nil {
+			return err
+		}
+
+		// TODO restructure/optimize/etc
+		// TODO outer loop that breaks if nothing changes from a pass, and bring functionality to other phases
+		// something has changed - flag this page for a retry
+		bothParamIt.RetryCurrentPage()
 	}
 	if err := bothParamIt.Error(); err != nil {
 		return err

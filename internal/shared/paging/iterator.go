@@ -8,11 +8,12 @@ type PageFetcher[T any] func(
 ) ([]T, error)
 
 type Iterator[T any] struct {
-	fetcher PageFetcher[T]
-	page    PageRequest
-	buffer  []T
-	index   int
-	err     error
+	fetcher    PageFetcher[T]
+	page       PageRequest
+	buffer     []T
+	index      int
+	needsRetry bool
+	err        error
 }
 
 func NewIterator[T any](page PageRequest, fetcher PageFetcher[T]) *Iterator[T] {
@@ -20,7 +21,14 @@ func NewIterator[T any](page PageRequest, fetcher PageFetcher[T]) *Iterator[T] {
 		page:    page,
 		fetcher: fetcher,
 		buffer:  make([]T, 0),
+		index:   -1,
 	}
+}
+
+// RetryCurrentPage flags that the calculations in this page window changed.
+// It will re-fetch the exact page that was just processed.
+func (it *Iterator[T]) RetryCurrentPage() {
+	it.needsRetry = true
 }
 
 func (it *Iterator[T]) Next(ctx context.Context) bool {
@@ -28,29 +36,41 @@ func (it *Iterator[T]) Next(ctx context.Context) bool {
 		return false
 	}
 
+	it.index++
+
 	if it.index >= len(it.buffer) {
-		items, err := it.fetcher(ctx, it.page)
-		if err != nil {
-			it.err = err
-			return false
+		if it.needsRetry {
+			it.needsRetry = false
+			if it.page.Page > 0 {
+				it.page.Page--
+			}
 		}
-
-		if len(items) == 0 {
-			return false
-		}
-
-		it.buffer = items
-		it.index = 0
-		it.page.Page++
+		return it.loadNextPage(ctx)
 	}
 
 	return true
 }
 
+// loadNextPage handles the shared data fetching logic
+func (it *Iterator[T]) loadNextPage(ctx context.Context) bool {
+	items, err := it.fetcher(ctx, it.page)
+	if err != nil {
+		it.err = err
+		return false
+	}
+
+	if len(items) == 0 {
+		return false
+	}
+
+	it.buffer = items
+	it.index = 0
+	it.page.Page++
+	return true
+}
+
 func (it *Iterator[T]) Value() T {
-	val := it.buffer[it.index]
-	it.index++
-	return val
+	return it.buffer[it.index]
 }
 
 func (it *Iterator[T]) Error() error {

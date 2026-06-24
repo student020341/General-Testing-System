@@ -2,6 +2,8 @@ package calculation
 
 import (
 	"fmt"
+	"strings"
+	"test-system/internal/shared/optional"
 
 	"github.com/dop251/goja"
 	"github.com/google/uuid"
@@ -84,9 +86,37 @@ func (c *Calculation) Update(fields CalculationFields) error {
 	return nil
 }
 
+type EvalInput map[string]optional.Optional[any]
+
 // TODO maybe move this, maybe make goja into infra or service, TBD
 // Evaluate executes the calculation closure with the given parameters
-func (c *Calculation) Evaluate(params []any) error {
+func (c *Calculation) Evaluate(input EvalInput) error {
+	// verify parameter count
+	if len(input) != len(c.ClosureDetails.Parameters) {
+		paramKeys := make([]string, 0, len(input))
+		for k := range input {
+			paramKeys = append(paramKeys, k)
+		}
+
+		return fmt.Errorf(
+			"parameter count mismatch: expected %s, got %s: %w",
+			strings.Join(c.ClosureDetails.Parameters, ", "),
+			strings.Join(paramKeys, ", "),
+			ErrParamCountMismatch,
+		)
+	}
+
+	// extract and sort parameters
+	params := make([]any, 0, len(input))
+	for _, paramName := range c.ClosureDetails.Parameters {
+		if p, exists := input[paramName]; exists {
+			if !p.Set {
+				return fmt.Errorf("parameter %q: %w", paramName, ErrIncompleteEvalInput)
+			}
+			params = append(params, p.Value)
+		}
+	}
+
 	// initialize goja vm
 	vm := goja.New()
 
@@ -99,13 +129,6 @@ func (c *Calculation) Evaluate(params []any) error {
 	callable, ok := goja.AssertFunction(res)
 	if !ok {
 		return ErrClosureNotCallable
-	}
-
-	// verify parameter count
-	jsObj := res.ToObject(vm)
-	paramCount := jsObj.Get("length").ToInteger()
-	if paramCount != int64(len(params)) {
-		return ErrParamCountMismatch
 	}
 
 	// convert parameters to vm args

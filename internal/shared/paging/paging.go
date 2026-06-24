@@ -24,7 +24,3 @@ func NewPageRequest(page, pageSize uint) PageRequest {
 func (r PageRequest) Offset() uint {
 	return (r.Page - 1) * r.PageSize
 }
-
-func (r PageRequest) Limit() uint {
-	return r.PageSize
-}
