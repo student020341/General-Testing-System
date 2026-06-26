@@ -48,9 +48,12 @@ func (r *EvalPoolRepository) Search(
 	res, err := r.BaseRepository.Search(
 		search.Paging,
 		func(p dbEvalPool) bool {
+			// TODO update search with optional pkg?
 			testMatch := search.TestID == "" || p.TestID == search.TestID
 			statusMatch := search.Status == "" || p.Status == search.Status
-			return testMatch && statusMatch
+			idMatch := search.EntityID == "" || p.EntityID == search.EntityID
+			poolMatch := !search.PoolNumber.Set || search.PoolNumber.Value == p.PoolNumber
+			return testMatch && statusMatch && idMatch && poolMatch
 		},
 	)
 	if err != nil {
@@ -82,4 +85,13 @@ func (r *EvalPoolRepository) Delete(
 	item *evalpool.PoolItem,
 ) error {
 	return r.BaseRepository.Delete(evalPoolItemFromDomain(item))
+}
+
+func (r *EvalPoolRepository) DeleteAllForTest(
+	ctx context.Context,
+	testID string,
+) error {
+	r.BaseRepository.iid = make([]string, 0)
+	r.BaseRepository.m = make(map[string]dbEvalPool)
+	return nil
 }

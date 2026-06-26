@@ -14,6 +14,7 @@ import (
 	appTestInput "test-system/internal/app/testinput"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
+	evalpool "test-system/internal/domain/eval_pool"
 	"test-system/internal/domain/labtest"
 	"test-system/internal/domain/report"
 	"test-system/internal/domain/service"
@@ -37,6 +38,7 @@ type TestServer struct {
 	reportRepo    report.Repository
 	calcLinkRepo  calculationlink.Repository
 	testInputRepo testinput.Repository
+	poolsRepo     evalpool.Repository
 	server        *httptest.Server
 }
 
@@ -46,6 +48,8 @@ func setupTestServer() TestServer {
 	reportRepo := memorymap.NewReportRepository()
 	calcLinkRepo := memorymap.NewCalculationLinkRepository()
 	testInputRepo := memorymap.NewTestInputRepository()
+	poolsRepo := memorymap.NewEvalPoolRepository()
+
 	calcLinksQuery := memorymap.NewCalculationWithLinksQuery(
 		*testInputRepo,
 		*calcRepo,
@@ -65,6 +69,15 @@ func setupTestServer() TestServer {
 		mux,
 		testTransport.CommandHandlers{
 			Create: appTest.NewCreateHandler(testRepo),
+			Build: appTest.NewBuildPoolsHandler(
+				service.NewEvaluationPoolBuilder(
+					calcRepo,
+					testInputRepo,
+					calcLinkRepo,
+					poolsRepo,
+					calcLinksQuery,
+				),
+			),
 			Evaluate: appTest.NewEvaluateTestHandler(
 				testInputRepo,
 				calcRepo,
@@ -128,6 +141,7 @@ func setupTestServer() TestServer {
 		reportRepo:    reportRepo,
 		calcLinkRepo:  calcLinkRepo,
 		testInputRepo: testInputRepo,
+		poolsRepo:     poolsRepo,
 		server:        server,
 	}
 }

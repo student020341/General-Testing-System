@@ -6,6 +6,7 @@ import (
 )
 
 type Search struct {
+	SourceID string
 	TargetID string
 	Paging   paging.PageRequest
 }
