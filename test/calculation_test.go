@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"slices"
 	"test-system/internal/domain/calculation"
@@ -12,7 +11,6 @@ import (
 	"test-system/internal/domain/report"
 	"test-system/internal/domain/testinput"
 	"test-system/internal/shared/optional"
-	"test-system/internal/shared/paging"
 	"testing"
 )
 
@@ -25,6 +23,7 @@ func TestCalculationE2E(t *testing.T) {
 	var reportID string
 	var testID string
 	var calculationID string
+	var secondCalculationID string
 	var finalCalculationID string // final in terms of dependencies on other things
 	var testInputID string
 	testClosure := `(a, b) => a+b`
@@ -194,6 +193,8 @@ func TestCalculationE2E(t *testing.T) {
 		tf.Equal(l.Target.TestEntityRef.ID, res.Data.ID, "target calculation id")
 		tf.Equal(l.Source.OutputType, "single", "source output type")
 		tf.Equal(l.Target.InputName, "c", "target input name")
+
+		secondCalculationID = res.Data.ID
 	})
 
 	t.Run("create test input and link", func(t *testing.T) {
@@ -338,15 +339,23 @@ func TestCalculationE2E(t *testing.T) {
 		tf.Ok(err, "build test")
 		tf.Equal(res.Status, 204, "response status")
 
-		// check eval pools
-		pools, err := ts.poolsRepo.Search(context.Background(), evalpool.Search{
-			TestID: testID,
-			Paging: paging.NewPageRequest(1, 100),
+		// calc 1 eval pool should be 2
+		piList, err := ts.poolsRepo.Search(context.Background(), evalpool.Search{
+			EntityID: calculationID,
 		})
-		tf.Ok(err, "search eval pools")
+		tf.Ok(err, "search calc 1 eval pool")
+		tf.Equal(len(piList), 1, "fetch calc 1 pool item")
+		pi := piList[0]
+		tf.Equal(pi.PoolNumber, uint(2), "calculation 1 is in pool 2")
 
-		jb, _ := json.MarshalIndent(pools, "", "  ")
-		fmt.Println(string(jb))
+		// calc 2 eval pool should be 3
+		piList, err = ts.poolsRepo.Search(context.Background(), evalpool.Search{
+			EntityID: secondCalculationID,
+		})
+		tf.Ok(err, "search calc 2 eval pool")
+		tf.Equal(len(piList), 1, "fetch calc 2 pool item")
+		pi = piList[0]
+		tf.Equal(pi.PoolNumber, uint(3), "calculation 2 is in pool 3")
 	})
 
 	t.Run("test eval", func(t *testing.T) {
