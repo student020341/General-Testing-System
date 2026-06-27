@@ -40,6 +40,9 @@ func (e EvaluationPoolBuilder) Build(
 	ctx context.Context,
 	testID string,
 ) error {
+	// TODO there will either need to be an additional pass or the logic here will need to operate at the report level instead of test
+	// since there may be dependencies defined in a different test under the same report
+
 	// clear out any past pools for test
 	if err := e.poolRepo.DeleteAllForTest(ctx, testID); err != nil {
 		return err
@@ -63,6 +66,7 @@ func (e EvaluationPoolBuilder) Build(
 		pi, err := evalpool.New(evalpool.CreatePoolItemInput{
 			TestID:          testID,
 			EntityID:        testinput.ID,
+			EntityType:      evalpool.EntityTypeTestInput,
 			DependencyCount: 0,
 		})
 		if err != nil {
@@ -98,6 +102,7 @@ func (e EvaluationPoolBuilder) Build(
 		pi, err := evalpool.New(evalpool.CreatePoolItemInput{
 			TestID:          testID,
 			EntityID:        calc.ID,
+			EntityType:      evalpool.EntityTypeCalculation,
 			DependencyCount: uint(len(calc.ClosureDetails.Parameters)),
 		})
 		if err != nil {

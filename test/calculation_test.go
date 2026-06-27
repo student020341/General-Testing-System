@@ -359,33 +359,32 @@ func TestCalculationE2E(t *testing.T) {
 	})
 
 	t.Run("test eval", func(t *testing.T) {
-		// 	req, err := ts.makeRequest(
-		// 		ts.requestWithMethod("POST"),
-		// 		ts.requestWithPath("/tests/"+testID+"/evaluate"),
-		// 	)
-		// 	tf.Ok(err, "evaluate request")
+		req, err := ts.makeRequest(
+			ts.requestWithMethod("POST"),
+			ts.requestWithPath("/tests/"+testID+"/evaluate"),
+		)
+		tf.Ok(err, "evaluate request")
 
-		// 	res, err := doRequest[any](
-		// 		ts.server.Client(),
-		// 		req,
-		// 	)
-		// 	tf.Ok(err, "evaluate test")
-		// 	tf.Equal(res.Status, 204, "response status")
+		res, err := doRequest[any](
+			ts.server.Client(),
+			req,
+		)
+		tf.Ok(err, "evaluate test")
+		tf.Equal(res.Status, 204, "response status")
 
-		// 	// check if the last calculation is solved
-		// 	calc, err := ts.calcRepo.GetByID(context.Background(), finalCalculationID)
-		// 	tf.Ok(err, "get last calculation")
-		// 	tf.NotNil(calc, "last calculation")
-		// 	tf.Equal(true, false, "calculation is solved") // TODO without the pass loop, this can fail randomly
+		// check if the last calculation is solved
+		calc, err := ts.calcRepo.GetByID(context.Background(), finalCalculationID)
+		tf.Ok(err, "get last calculation")
+		tf.NotNil(calc, "last calculation")
+		tf.Equal(calc.Result.Solved, true, "calculation is solved")
 
-		// 	// calculation path was:
-		// 	// (c) => 2 * c
-		// 	// c input = output of (a, b) => a+b
-		// 	// a input = test input, set to 3
-		// 	// b input = calculation defined as () => 12
-		// 	// final eval: (c=15) = 2 * 15 = 30
-		// 	tf.Equal(calc.Result.Value, int64(30), "verify calculation result")
-		_ = finalCalculationID
+		// calculation path was:
+		// (c) => 2 * c
+		// c input = output of (a, b) => a+b
+		// a input = test input, set to 3
+		// b input = calculation defined as () => 12
+		// final eval: (c=15) = 2 * 15 = 30
+		tf.Equal(calc.Result.Value, int64(30), "verify calculation result")
 	})
 
 	// t.Run("scratch", func(t *testing.T) {

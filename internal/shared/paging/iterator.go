@@ -12,6 +12,7 @@ type Iterator[T any] struct {
 	page       PageRequest
 	buffer     []T
 	index      int
+	atLeastOne bool
 	needsRetry bool
 	err        error
 }
@@ -66,6 +67,7 @@ func (it *Iterator[T]) loadNextPage(ctx context.Context) bool {
 	it.buffer = items
 	it.index = 0
 	it.page.Page++
+	it.atLeastOne = true
 	return true
 }
 
@@ -75,4 +77,9 @@ func (it *Iterator[T]) Value() T {
 
 func (it *Iterator[T]) Error() error {
 	return it.err
+}
+
+// AtLeastOne returns true if at least one item was loaded in any iteration
+func (it *Iterator[T]) AtLeastOne() bool {
+	return it.atLeastOne
 }

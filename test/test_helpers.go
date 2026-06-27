@@ -83,6 +83,7 @@ func setupTestServer() TestServer {
 				calcRepo,
 				calcLinkRepo,
 				calcLinksQuery,
+				poolsRepo,
 			),
 		},
 	)

@@ -125,3 +125,48 @@ func (q CalculationWithLinksQuery) Get(
 
 	return results, nil
 }
+
+func (q CalculationWithLinksQuery) GetByCalculationID(
+	ctx context.Context,
+	calcID string,
+) (*query.CalculationWithLinks, error) {
+	calc, err := q.calcRepo.GetByID(ctx, calcID)
+	if err != nil {
+		return nil, err
+	}
+
+	linkIT := paging.NewIterator(
+		paging.NewPageRequest(1, 10),
+		func(ctx context.Context, page paging.PageRequest) ([]calculationlink.Link, error) {
+			return q.linkRepo.Search(ctx, calculationlink.Search{
+				TargetID: calcID,
+				Paging:   page,
+			})
+		},
+	)
+
+	cw := query.CalculationWithLinks{
+		Root: *calc,
+	}
+
+	for linkIT.Next(ctx) {
+		link := linkIT.Value()
+
+		var le any
+		if link.Source.OutputType == string(calculationlink.OutputTypeInput) {
+			le, err = q.testInputRepo.GetByID(ctx, link.Source.ID)
+		} else {
+			le, err = q.calcRepo.GetByID(ctx, link.Source.ID)
+		}
+
+		cw.Links = append(cw.Links, query.LinkedEntity{
+			Link:   link,
+			Entity: le,
+		})
+	}
+	if err := linkIT.Error(); err != nil {
+		return nil, err
+	}
+
+	return &cw, nil
+}

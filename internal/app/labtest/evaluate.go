@@ -2,10 +2,10 @@ package labtest
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"test-system/internal/domain/calculation"
 	calculationlink "test-system/internal/domain/calculation_link"
+	evalpool "test-system/internal/domain/eval_pool"
 	"test-system/internal/domain/query"
 	"test-system/internal/domain/testinput"
 	"test-system/internal/shared/optional"
@@ -17,6 +17,7 @@ type EvaluateTestHandler struct {
 	calcRepo      calculation.Repository
 	linkRepo      calculationlink.Repository
 	calcLinksRepo query.CalculationsWithLinksQuery
+	poolRepo      evalpool.Repository
 }
 
 func NewEvaluateTestHandler(
@@ -24,12 +25,14 @@ func NewEvaluateTestHandler(
 	calcRepo calculation.Repository,
 	linkRepo calculationlink.Repository,
 	calcLinksRepo query.CalculationsWithLinksQuery,
+	evalPoolRepo evalpool.Repository,
 ) EvaluateTestHandler {
 	return EvaluateTestHandler{
 		testInputRepo: testInputRepo,
 		calcRepo:      calcRepo,
 		linkRepo:      linkRepo,
 		calcLinksRepo: calcLinksRepo,
+		poolRepo:      evalPoolRepo,
 	}
 }
 
@@ -51,100 +54,53 @@ func (h EvaluateTestHandler) Handle(
 		return fmt.Errorf("test %s has incomplete inputs", testID)
 	}
 
-	// phase 1: run all calculations that have no parameters
-	noParamIt := paging.NewIterator(
-		paging.NewPageRequest(1, 10),
-		func(ctx context.Context, page paging.PageRequest) ([]calculation.Calculation, error) {
-			return h.calcRepo.Search(ctx, calculation.Search{
-				Paging:          page,
-				TestID:          testID,
-				HasDependencies: optional.New(false),
-				IsSolved:        optional.New(false),
-			})
-		},
-	)
-	for noParamIt.Next(ctx) {
-		calc := noParamIt.Value()
-		if err := calc.Evaluate(nil); err != nil {
-			return err
-		}
-		if err := h.calcRepo.Save(ctx, &calc); err != nil {
-			return err
-		}
-	}
-	if err := noParamIt.Error(); err != nil {
-		return err
-	}
+	// iterate and solve by pool
+	currentPool := 1
+	haveNext := true
+	for haveNext {
+		poolIT := paging.NewIterator(
+			paging.NewPageRequest(1, 10),
+			func(ctx context.Context, page paging.PageRequest) ([]evalpool.PoolItem, error) {
+				return h.poolRepo.Search(ctx, evalpool.Search{
+					Paging:     page,
+					TestID:     testID,
+					PoolNumber: optional.New(uint(currentPool)),
+				})
+			},
+		)
+		for poolIT.Next(ctx) {
+			pi := poolIT.Value()
+			// value of test inputs should already be set at this point
+			if pi.EntityType == evalpool.EntityTypeTestInput {
+				continue
+			}
 
-	// phase 2: run all calculations that have parameters that are test inputs
-	inputParamIt := paging.NewIterator(
-		paging.NewPageRequest(1, 10),
-		func(ctx context.Context, page paging.PageRequest) ([]query.CalculationWithLinks, error) {
-			return h.calcLinksRepo.Get(
+			fullCalc, err := h.calcLinksRepo.GetByCalculationID(
 				ctx,
-				page,
-				testID,
-				query.LinkTypeInput,
+				pi.EntityID,
 			)
-		},
-	)
-	for inputParamIt.Next(ctx) {
-		calc := inputParamIt.Value()
-		args, err := calc.ToEvalInput()
-		if err != nil {
-			// TODO dedicated pass to add more information to all errors
-			return err
-		}
-		if err := calc.Root.Evaluate(args); err != nil {
-			return err
-		}
-		if err := h.calcRepo.Save(ctx, &calc.Root); err != nil {
-			return err
-		}
-	}
-	if err := inputParamIt.Error(); err != nil {
-		return err
-	}
+			if err != nil {
+				return fmt.Errorf("full calculation query for entity %q: %w", pi.EntityID, err)
+			}
 
-	// TODO this needs to loop and avoid infinite looping
-	// phase 3: run all calculations that have parameters that are other calculation results
-	bothParamIt := paging.NewIterator(
-		paging.NewPageRequest(1, 10),
-		func(ctx context.Context, page paging.PageRequest) ([]query.CalculationWithLinks, error) {
-			return h.calcLinksRepo.Get(
-				ctx,
-				page,
-				testID,
-				query.LinkTypeBoth,
-			)
-		},
-	)
-	for bothParamIt.Next(ctx) {
-		calc := bothParamIt.Value()
-		args, err := calc.ToEvalInput()
-		if err != nil {
+			args, err := fullCalc.ToEvalInput()
+			if err != nil {
+				return err
+			}
+
+			if err := fullCalc.Root.Evaluate(args); err != nil {
+				return err
+			}
+			if err := h.calcRepo.Save(ctx, &fullCalc.Root); err != nil {
+				return err
+			}
+		}
+		if err := poolIT.Error(); err != nil {
 			return err
 		}
 
-		err = calc.Root.Evaluate(args)
-		if errors.Is(err, calculation.ErrIncompleteEvalInput) {
-			continue
-		}
-		if err != nil {
-			return err
-		}
-
-		if err := h.calcRepo.Save(ctx, &calc.Root); err != nil {
-			return err
-		}
-
-		// TODO restructure/optimize/etc
-		// TODO outer loop that breaks if nothing changes from a pass, and bring functionality to other phases
-		// something has changed - flag this page for a retry
-		bothParamIt.RetryCurrentPage()
-	}
-	if err := bothParamIt.Error(); err != nil {
-		return err
+		haveNext = poolIT.AtLeastOne()
+		currentPool++
 	}
 
 	return nil

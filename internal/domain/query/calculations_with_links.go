@@ -58,4 +58,8 @@ type CalculationsWithLinksQuery interface {
 		testID string,
 		linkType LinkType,
 	) ([]CalculationWithLinks, error)
+	GetByCalculationID(
+		ctx context.Context,
+		calcID string,
+	) (*CalculationWithLinks, error)
 }
